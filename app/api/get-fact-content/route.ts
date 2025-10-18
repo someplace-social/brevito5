@@ -75,7 +75,7 @@ Sentence: "${fact.english_text}"`;
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${genAIKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${genAIKey}`,
       {
         method: "POST",
         headers: {
