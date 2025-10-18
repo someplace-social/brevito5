@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 
-export function FactCard({ factId }: { factId: string }) {
+type FactCardProps = {
+  factId: string;
+  language: string;
+  level: string;
+};
+
+export function FactCard({ factId, language, level }: FactCardProps) {
   const [content, setContent] = useState(" ");
   const [error, setError] = useState("");
   const { ref, isIntersecting } = useIntersectionObserver({
@@ -26,8 +32,8 @@ export function FactCard({ factId }: { factId: string }) {
             },
             body: JSON.stringify({
               factId,
-              language: "English", // Placeholder
-              level: "Beginner", // Placeholder
+              language,
+              level,
             }),
           });
 
@@ -45,7 +51,7 @@ export function FactCard({ factId }: { factId: string }) {
 
       fetchContent();
     }
-  }, [factId, isIntersecting, wasIntersecting]);
+  }, [factId, isIntersecting, wasIntersecting, language, level]);
 
   return (
     <Card ref={ref} className="w-full min-h-[100px]">
