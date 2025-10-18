@@ -23,22 +23,30 @@ export default function Home() {
 
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
-  const loadMoreFacts = useCallback(async () => {
-    if (isLoading || !hasMore) return;
+  const loadMoreFacts = useCallback(async (isNewSettings = false) => {
+    if (isLoading || (!hasMore && !isNewSettings)) return;
     setIsLoading(true);
+
+    const currentPage = isNewSettings ? 0 : page;
+
     try {
       const response = await fetch(
-        `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}`,
+        `/api/get-facts?page=${currentPage}&limit=${PAGE_LIMIT}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch facts");
       }
       const newFacts = await response.json();
+      
       if (newFacts.length < PAGE_LIMIT) {
         setHasMore(false);
+      } else {
+        setHasMore(true);
       }
-      setFacts((prevFacts) => [...prevFacts, ...newFacts]);
-      setPage((prevPage) => prevPage + 1);
+
+      setFacts((prevFacts) => isNewSettings ? newFacts : [...prevFacts, ...newFacts]);
+      setPage(currentPage + 1);
+
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred",
@@ -48,17 +56,19 @@ export default function Home() {
     }
   }, [page, hasMore, isLoading]);
 
+  // Initial load
   useEffect(() => {
     loadMoreFacts();
-  }, []); // Initial load
+  }, []);
 
+  // Load more on scroll
   useEffect(() => {
     if (isIntersecting && hasMore) {
       loadMoreFacts();
     }
   }, [isIntersecting, hasMore, loadMoreFacts]);
 
-  const handleSettingsChange = (newLanguage: string, newLevel: string) => {
+  const handleSettingsChange = useCallback((newLanguage: string, newLevel: string) => {
     setLanguage(newLanguage);
     setLevel(newLevel);
     // Reset facts and pagination when settings change
@@ -66,12 +76,12 @@ export default function Home() {
     setPage(0);
     setHasMore(true);
     setSettingsKey((prevKey) => prevKey + 1);
-  };
+  }, []);
   
   // Effect to reload facts when settings change
   useEffect(() => {
-    if (settingsKey > 0) { // a change has happened
-        loadMoreFacts();
+    if (settingsKey > 0) {
+        loadMoreFacts(true);
     }
   }, [settingsKey]);
 
