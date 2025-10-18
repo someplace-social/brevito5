@@ -8,6 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Skeleton } from "./ui/skeleton";
 
 type FactCardProps = {
   factId: string;
@@ -16,7 +17,7 @@ type FactCardProps = {
 };
 
 export function FactCard({ factId, language, level }: FactCardProps) {
-  const [content, setContent] = useState(" ");
+  const [content, setContent] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
   });
@@ -28,7 +29,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   useEffect(() => {
     if (isIntersecting && !wasIntersecting) {
       setWasIntersecting(true);
-      setContent("Loading...");
 
       const fetchContent = async () => {
         try {
@@ -55,7 +55,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
 
   const handleWordClick = async (e: React.MouseEvent<HTMLSpanElement>) => {
     const word = (e.target as HTMLElement).innerText.replace(/[.,!?]/g, "");
-    if (!word) return;
+    if (!word || !content) return;
 
     setCurrentTarget(e.currentTarget);
     setPopoverOpen(true);
@@ -86,8 +86,13 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   };
 
   const renderContent = () => {
-    if (content === " " || content === "Loading...") {
-      return <p>{content}</p>;
+    if (content === null) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      );
     }
 
     return (
