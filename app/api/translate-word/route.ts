@@ -100,4 +100,4 @@ Sentence: "${context}"`;
   }
 
   return NextResponse.json({ translation });
-}
+} 
