@@ -44,7 +44,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
 
           const data = await response.json();
           setContent(data.content);
-        } catch (err) {
+        } catch {
           setContent("Could not load content.");
         }
       };
@@ -80,7 +80,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
 
       const data = await response.json();
       setTranslation(data.translation);
-    } catch (error) {
+    } catch {
       setTranslation("Error");
     }
   };
