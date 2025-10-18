@@ -60,7 +60,7 @@ Sentence: "${context}"`;
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${genAIKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${genAIKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
