@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type FactCardProps = {
   factId: string;
@@ -17,24 +22,21 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     threshold: 0.1,
   });
   const [wasIntersecting, setWasIntersecting] = useState(false);
+  const [translation, setTranslation] = useState("");
+  const [isPopoverOpen, setPopoverOpen] = useState(false);
+  const [currentTarget, setCurrentTarget] = useState<EventTarget | null>(null);
 
   useEffect(() => {
     if (isIntersecting && !wasIntersecting) {
-      setWasIntersecting(true); // Ensure fetch only happens once
+      setWasIntersecting(true);
       setContent("Loading...");
 
       const fetchContent = async () => {
         try {
           const response = await fetch("/api/get-fact-content", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              factId,
-              language,
-              level,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ factId, language, level }),
           });
 
           if (!response.ok) {
@@ -44,7 +46,9 @@ export function FactCard({ factId, language, level }: FactCardProps) {
           const data = await response.json();
           setContent(data.content);
         } catch (err) {
-          setError(err instanceof Error ? err.message : "An unknown error occurred");
+          setError(
+            err instanceof Error ? err.message : "An unknown error occurred",
+          );
           setContent("Could not load content.");
         }
       };
@@ -53,10 +57,84 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     }
   }, [factId, isIntersecting, wasIntersecting, language, level]);
 
+  const handleWordClick = async (e: React.MouseEvent<HTMLSpanElement>) => {
+    const word = (e.target as HTMLElement).innerText.replace(/[.,!?]/g, "");
+    if (!word) return;
+
+    setCurrentTarget(e.currentTarget);
+    setPopoverOpen(true);
+    setTranslation("Translating...");
+
+    try {
+      const response = await fetch("/api/translate-word", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word,
+          context: content,
+          language,
+          level,
+          factId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Translation failed");
+      }
+
+      const data = await response.json();
+      setTranslation(data.translation);
+    } catch (error) {
+      setTranslation("Error");
+    }
+  };
+
+  const renderContent = () => {
+    if (content === " " || content === "Loading...") {
+      return <p>{content}</p>;
+    }
+
+    return (
+      <p>
+        {content.split(/(\s+)/).map((segment, index) =>
+          /\s+/.test(segment) ? (
+            <span key={index}>{segment}</span>
+          ) : (
+            <span
+              key={index}
+              className="cursor-pointer hover:bg-accent rounded-sm"
+              onClick={handleWordClick}
+            >
+              {segment}
+            </span>
+          ),
+        )}
+      </p>
+    );
+  };
+
   return (
     <Card ref={ref} className="w-full min-h-[100px]">
       <CardContent className="p-6">
-        <p>{content}</p>
+        <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>{renderContent()}</PopoverTrigger>
+          {currentTarget && (
+            <PopoverContent
+              className="w-auto"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              align="center"
+              side="top"
+              // This is a trick to anchor the popover to the clicked word
+              style={{
+                position: "absolute",
+                left: `${(currentTarget as HTMLElement).offsetLeft}px`,
+                top: `${(currentTarget as HTMLElement).offsetTop - 40}px`,
+              }}
+            >
+              {translation}
+            </PopoverContent>
+          )}
+        </Popover>
         {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
       </CardContent>
     </Card>
