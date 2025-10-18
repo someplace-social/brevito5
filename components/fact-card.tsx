@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import {
@@ -17,7 +17,6 @@ type FactCardProps = {
 
 export function FactCard({ factId, language, level }: FactCardProps) {
   const [content, setContent] = useState(" ");
-  const [error, setError] = useState("");
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
   });
@@ -46,9 +45,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
           const data = await response.json();
           setContent(data.content);
         } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "An unknown error occurred",
-          );
           setContent("Could not load content.");
         }
       };
@@ -135,7 +131,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
             </PopoverContent>
           )}
         </Popover>
-        {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
       </CardContent>
     </Card>
   );

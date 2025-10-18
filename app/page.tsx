@@ -59,7 +59,7 @@ export default function Home() {
   // Initial load
   useEffect(() => {
     loadMoreFacts();
-  }, []);
+  }, [loadMoreFacts]);
 
   // Load more on scroll
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function Home() {
     if (settingsKey > 0) {
         loadMoreFacts(true);
     }
-  }, [settingsKey]);
+  }, [settingsKey, loadMoreFacts]);
 
 
   return (
