@@ -50,7 +50,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   }, [language, level, onSettingsChange, isClient]);
 
   if (!isClient) {
-    // Render nothing on the server to avoid hydration mismatch.
+    // Render a placeholder or nothing on the server to avoid hydration mismatch.
+    // Returning null is the simplest approach.
     return null;
   }
 
@@ -111,11 +112,12 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               <SelectContent>
                 <SelectItem value="light">Daybreak</SelectItem>
                 <SelectItem value="dark">Midnight</SelectItem>
-                <SelectItem value="theme-desert-dusk">Desert Dusk</SelectItem>
-                <SelectItem value="theme-moss-bark">Moss & Bark</SelectItem>
-                <SelectItem value="theme-coastal-cliffs">Coastal Cliffs</SelectItem>
-                <SelectItem value="theme-autumn-meadow">Autumn Meadow</SelectItem>
-                <SelectItem value="theme-clay-sage">Clay & Sage</SelectItem>
+                <SelectItem value="theme-dusk">Dusk</SelectItem>
+                <SelectItem value="theme-forest">Forest</SelectItem>
+                <SelectItem value="theme-coast">Coast</SelectItem>
+                <SelectItem value="theme-autumn">Autumn</SelectItem>
+                <SelectItem value="theme-sage">Sage</SelectItem>
+                <SelectItem value="theme-eggplant">Eggplant</SelectItem>
               </SelectContent>
             </Select>
           </div>

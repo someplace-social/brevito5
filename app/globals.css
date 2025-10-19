@@ -57,7 +57,7 @@
     --chart-5: 340 75% 55%;
   }
 
-  .theme-desert-dusk {
+  .theme-dusk {
     --background: 39 47% 81%;
     --foreground: 20 20% 15%;
     --card: 39 40% 88%;
@@ -79,7 +79,7 @@
     --ring: 17 56% 53%;
   }
 
-  .theme-moss-bark {
+  .theme-forest {
     --background: 43 11% 78%;
     --foreground: 11 31% 15%;
     --card: 43 15% 85%;
@@ -101,7 +101,7 @@
     --ring: 89 25% 48%;
   }
 
-  .theme-coastal-cliffs {
+  .theme-coast {
     --background: 180 2% 63%;
     --foreground: 23 29% 18%;
     --card: 180 5% 73%;
@@ -123,7 +123,7 @@
     --ring: 171 24% 58%;
   }
 
-  .theme-autumn-meadow {
+  .theme-autumn {
     --background: 150 25% 25%;
     --foreground: 43 64% 90%;
     --card: 150 25% 30%;
@@ -145,7 +145,7 @@
     --ring: 18 68% 54%;
   }
 
-  .theme-clay-sage {
+  .theme-sage {
     --background: 28 12% 61%;
     --foreground: 10 49% 15%;
     --card: 28 15% 71%;
@@ -165,6 +165,28 @@
     --border: 28 10% 50%;
     --input: 28 10% 50%;
     --ring: 10 49% 50%;
+  }
+
+  .theme-eggplant {
+    --background: 263 47% 11%;
+    --foreground: 263 47% 91%;
+    --card: 263 47% 14%;
+    --card-foreground: 263 47% 91%;
+    --popover: 263 47% 14%;
+    --popover-foreground: 263 47% 91%;
+    --primary: 263 47% 71%;
+    --primary-foreground: 263 47% 11%;
+    --secondary: 263 47% 21%;
+    --secondary-foreground: 263 47% 91%;
+    --muted: 263 47% 21%;
+    --muted-foreground: 263 47% 61%;
+    --accent: 263 47% 31%;
+    --accent-foreground: 263 47% 91%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 263 47% 21%;
+    --input: 263 47% 21%;
+    --ring: 263 47% 71%;
   }
 }
 
