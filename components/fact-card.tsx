@@ -71,9 +71,10 @@ type FactCardProps = {
   factId: string;
   language: string;
   level: string;
+  loadDelay: number; // New prop for staggering requests
 };
 
-export function FactCard({ factId, language, level }: FactCardProps) {
+export function FactCard({ factId, language, level, loadDelay }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
@@ -93,19 +94,27 @@ export function FactCard({ factId, language, level }: FactCardProps) {
           });
 
           if (!response.ok) {
-            throw new Error("Failed to fetch fact content");
+            const errorData = await response.json();
+            // Use the error message from the backend if available
+            throw new Error(errorData.error || "Failed to fetch fact content");
           }
 
           const data = await response.json();
           setContent(data.content);
-        } catch {
-          setContent("Could not load content.");
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Could not load content.";
+          setContent(errorMessage);
         }
       };
 
-      fetchContent();
+      // Delay the fetch to avoid hitting rate limits
+      const timer = setTimeout(() => {
+        fetchContent();
+      }, loadDelay);
+
+      return () => clearTimeout(timer); // Cleanup timeout on unmount
     }
-  }, [factId, isIntersecting, wasIntersecting, language, level]);
+  }, [factId, isIntersecting, wasIntersecting, language, level, loadDelay]);
 
   return (
     <Card ref={ref} className="w-full min-h-[100px]">
