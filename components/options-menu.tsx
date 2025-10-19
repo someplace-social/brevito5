@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Settings, Moon, Sun } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
@@ -70,7 +70,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="language" className="text-right">
               Language
             </Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={language} onValuege={setLanguage}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
@@ -98,25 +98,6 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Dark / Light</Label>
-            <div className="col-span-3 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setTheme("light")}
-              >
-                <Sun className="h-[1.2rem] w-[1.2rem]" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setTheme("dark")}
-              >
-                <Moon className="h-[1.2rem] w-[1.2rem]" />
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="theme" className="text-right">
               Theme
             </Label>
@@ -125,8 +106,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
                 <SelectValue placeholder="Select a theme" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="light">Default Light</SelectItem>
-                <SelectItem value="dark">Default Dark</SelectItem>
+                <SelectItem value="light">Daybreak</SelectItem>
+                <SelectItem value="dark">Midnight</SelectItem>
                 <SelectItem value="theme-desert-dusk">Desert Dusk</SelectItem>
                 <SelectItem value="theme-moss-bark">Moss & Bark</SelectItem>
                 <SelectItem value="theme-coastal-cliffs">Coastal Cliffs</SelectItem>
