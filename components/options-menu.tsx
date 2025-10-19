@@ -30,14 +30,18 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [level, setLevel] = useState("Beginner");
   const [isClient, setIsClient] = useState(false);
   const { theme, setTheme } = useTheme();
+  
+  // Local state to ensure the UI updates instantly
+  const [currentTheme, setCurrentTheme] = useState<string | undefined>();
 
   useEffect(() => {
     setIsClient(true);
+    setCurrentTheme(theme); // Sync local state with global theme on mount
     const savedLanguage = localStorage.getItem("brevito-language");
     const savedLevel = localStorage.getItem("brevito-level");
     if (savedLanguage) setLanguage(savedLanguage);
     if (savedLevel) setLevel(savedLevel);
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     if (isClient) {
@@ -47,8 +51,13 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     }
   }, [language, level, onSettingsChange, isClient]);
 
-  if (!isClient) {
-    return null; // Don't render on the server
+  const handleThemeChange = (newTheme: string) => {
+    setCurrentTheme(newTheme); // Update local state immediately for instant UI feedback
+    setTheme(newTheme); // Update the global theme
+  };
+
+  if (!isClient || !currentTheme) {
+    return null; // Don't render on the server or before theme is determined
   }
 
   return (
@@ -70,7 +79,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="language" className="text-right">
               Language
             </Label>
-            <Select value={language} onValuege={setLanguage}>
+            <Select value={language} onValueChange={setLanguage}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
@@ -101,7 +110,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="theme" className="text-right">
               Theme
             </Label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={currentTheme} onValueChange={handleThemeChange}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a theme" />
               </SelectTrigger>
