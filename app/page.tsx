@@ -14,19 +14,17 @@ const PAGE_LIMIT = 5;
 export default function Home() {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [error, setError] = useState("");
-  const [language, setLanguage] = useState("Spanish");
+  const [contentLanguage, setContentLanguage] = useState("Spanish");
+  const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
   
-  // State to trigger fetching
   const [page, setPage] = useState(0);
   const [settingsKey, setSettingsKey] = useState(0);
-
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
-  // This is now the single source of truth for fetching data.
   useEffect(() => {
     if (isLoading || !hasMore) return;
 
@@ -63,17 +61,16 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, settingsKey]);
 
-  // This effect handles the infinite scroll trigger.
   useEffect(() => {
     if (isIntersecting && hasMore && !isLoading) {
       setPage((prevPage) => prevPage + 1);
     }
   }, [isIntersecting, hasMore, isLoading]);
 
-  // This function now only resets state.
   const handleSettingsChange = useCallback(
-    (newLanguage: string, newLevel: string) => {
-      setLanguage(newLanguage);
+    (newContentLang: string, newTranslationLang: string, newLevel: string) => {
+      setContentLanguage(newContentLang);
+      setTranslationLanguage(newTranslationLang);
       setLevel(newLevel);
       setFacts([]);
       setPage(0);
@@ -104,7 +101,8 @@ export default function Home() {
             <FactCard
               key={`${fact.id}-${settingsKey}`}
               factId={fact.id}
-              language={language}
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
               level={level}
             />
           ))}

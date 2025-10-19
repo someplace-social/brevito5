@@ -22,27 +22,31 @@ import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 
 type OptionsMenuProps = {
-  onSettingsChange: (language: string, level: string) => void;
+  onSettingsChange: (contentLanguage: string, translationLanguage: string, level: string) => void;
 };
 
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
-  const [language, setLanguage] = useState("Spanish");
+  const [contentLanguage, setContentLanguage] = useState("Spanish");
+  const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
 
   // Effect to load saved settings on mount
   useEffect(() => {
-    const savedLanguage = localStorage.getItem("brevito-language");
+    const savedContentLang = localStorage.getItem("brevito-content-language");
+    const savedTranslationLang = localStorage.getItem("brevito-translation-language");
     const savedLevel = localStorage.getItem("brevito-level");
-    if (savedLanguage) setLanguage(savedLanguage);
+    if (savedContentLang) setContentLanguage(savedContentLang);
+    if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
     if (savedLevel) setLevel(savedLevel);
   }, []);
 
   // Effect to save settings when they change
   useEffect(() => {
-    localStorage.setItem("brevito-language", language);
+    localStorage.setItem("brevito-content-language", contentLanguage);
+    localStorage.setItem("brevito-translation-language", translationLanguage);
     localStorage.setItem("brevito-level", level);
-    onSettingsChange(language, level);
-  }, [language, level, onSettingsChange]);
+    onSettingsChange(contentLanguage, translationLanguage, level);
+  }, [contentLanguage, translationLanguage, level, onSettingsChange]);
 
   return (
     <Sheet>
@@ -55,19 +59,36 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
         <SheetHeader>
           <SheetTitle>Options</SheetTitle>
           <SheetDescription>
-            Choose your language, level, and theme.
+            Choose your content and translation languages.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="language" className="text-right">
-              Language
+            <Label htmlFor="content-language" className="text-right">
+              Content
             </Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={contentLanguage} onValueChange={setContentLanguage}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Spanish">Spanish</SelectItem>
+                <SelectItem value="French">French</SelectItem>
+                <SelectItem value="German">German</SelectItem>
+                <SelectItem value="Italian">Italian</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="translation-language" className="text-right">
+              Translate To
+            </Label>
+            <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="English">English</SelectItem>
                 <SelectItem value="Spanish">Spanish</SelectItem>
                 <SelectItem value="French">French</SelectItem>
                 <SelectItem value="German">German</SelectItem>
@@ -90,7 +111,6 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               </SelectContent>
             </Select>
           </div>
-          {/* Use the new, isolated theme switcher component */}
           <ThemeSwitcher />
         </div>
       </SheetContent>
