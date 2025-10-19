@@ -48,9 +48,12 @@ export default function Home() {
           setHasMore(false);
         }
 
-        // If it's the first page (initial load or settings change), replace the facts.
-        // Otherwise, append the new facts to the existing list.
-        setFacts((prevFacts) => (page === 0 ? newFacts : [...prevFacts, ...newFacts]));
+        // De-duplicate facts before setting state to prevent key errors
+        setFacts((prevFacts) => {
+          const combinedFacts = page === 0 ? newFacts : [...prevFacts, ...newFacts];
+          const uniqueFacts = Array.from(new Map(combinedFacts.map(fact => [fact.id, fact])).values());
+          return uniqueFacts;
+        });
 
       } catch (err) {
         setError(
