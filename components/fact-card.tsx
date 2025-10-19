@@ -21,6 +21,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // --- State Management ---
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -39,7 +40,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   // Effect to fetch the main fact content
   useEffect(() => {
     if (isIntersecting) {
-      // Logic to fetch fact content
       const fetchContent = async () => {
         try {
           const response = await fetch("/api/get-fact-content", {
@@ -58,10 +58,16 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     }
   }, [factId, isIntersecting, language, level]);
 
-  // Effect to handle text selection
+  // Effect to handle text selection with debouncing
   useEffect(() => {
     const handleSelectionChange = () => {
-      setTimeout(() => {
+      // Clear any existing timer
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+
+      // Set a new timer
+      debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
         if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
           if (popoverOpen) setPopoverOpen(false);
@@ -75,16 +81,23 @@ export function FactCard({ factId, language, level }: FactCardProps) {
           setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
           if (text !== selectedText) {
             setSelectedText(text);
-            setAnalysis(null); // Reset analysis for new word
+            setAnalysis(null);
           }
           setPopoverOpen(true);
         } else {
           setPopoverOpen(false);
         }
-      }, 50);
+      }, 300); // Wait for 300ms of no selection activity
     };
+    
     document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+    
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
   }, [popoverOpen, selectedText]);
 
   // Effect to fetch the initial DeepL translation
@@ -116,10 +129,9 @@ export function FactCard({ factId, language, level }: FactCardProps) {
 
   // Handler for the "Learn More" button
   const handleLearnMore = async () => {
-    setPopoverOpen(false); // Close the small popover
-    setDrawerOpen(true);   // Open the big drawer
+    setPopoverOpen(false);
+    setDrawerOpen(true);
     
-    // Fetch analysis if we don't already have it
     if (!analysis) {
       setIsLoadingAnalysis(true);
       setAnalysisError(null);
@@ -177,7 +189,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
         </Popover>
       </Card>
 
-      {/* The Analysis Drawer */}
       <WordAnalysisDrawer
         isOpen={drawerOpen}
         onOpenChange={setDrawerOpen}
