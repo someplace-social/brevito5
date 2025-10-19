@@ -101,13 +101,12 @@ export default function Home() {
       </nav>
       <div className="flex-1 w-full flex flex-col items-center p-4">
         <div className="w-full max-w-2xl flex flex-col gap-4">
-          {facts.map((fact, index) => (
+          {facts.map((fact) => (
             <FactCard
               key={`${fact.id}-${settingsKey}`}
               factId={fact.id}
               language={language}
               level={level}
-              loadDelay={index * 500} // Stagger each card's load by 500ms
             />
           ))}
 

@@ -54,7 +54,8 @@ function TranslatedWord({
         }
         const data = await response.json();
         setTranslation(data.translation);
-      } catch (err) {
+      } catch (err)
+      {
         setError(err instanceof Error ? err.message : "An error occurred.");
       } finally {
         setIsLoading(false);
@@ -108,22 +109,18 @@ type FactCardProps = {
   factId: string;
   language: string;
   level: string;
-  loadDelay: number;
 };
 
-export function FactCard({ factId, language, level, loadDelay }: FactCardProps) {
+export function FactCard({ factId, language, level }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasFetched, setHasFetched] = useState(false);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
   });
 
   useEffect(() => {
-    // Trigger fetch only if the card is visible and hasn't been fetched yet.
-    if (isIntersecting && !hasFetched) {
-      setHasFetched(true); // Mark as fetched immediately to prevent re-fetching.
-
+    // The hook ensures isIntersecting only becomes true once.
+    if (isIntersecting) {
       const fetchContent = async () => {
         try {
           const response = await fetch("/api/get-fact-content", {
@@ -145,15 +142,10 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
         }
       };
 
-      const timer = setTimeout(() => {
-        fetchContent();
-      }, loadDelay);
-
-      return () => clearTimeout(timer);
+      fetchContent();
     }
-  }, [factId, isIntersecting, hasFetched, language, level, loadDelay]);
+  }, [factId, isIntersecting, language, level]);
 
-  // A card is loading if we haven't received content or an error yet.
   const isLoading = !content && !error;
 
   return (
