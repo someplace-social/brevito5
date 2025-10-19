@@ -27,9 +27,7 @@ export default function Home() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
   // This is now the single source of truth for fetching data.
-  // It runs whenever the page number or settings change.
   useEffect(() => {
-    // Guard against fetching if we're already loading or if there's nothing left to fetch.
     if (isLoading || !hasMore) return;
 
     const fetchData = async () => {
@@ -39,21 +37,16 @@ export default function Home() {
         const response = await fetch(
           `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}`,
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch facts");
-        }
+        if (!response.ok) throw new Error("Failed to fetch facts");
         const newFacts: Fact[] = await response.json();
 
         if (newFacts.length < PAGE_LIMIT) {
           setHasMore(false);
         }
 
-        // De-duplicate facts before setting state to prevent key errors
         setFacts((prevFacts) => {
           const combinedFacts = page === 0 ? newFacts : [...prevFacts, ...newFacts];
-          // Create a Map to store facts by their unique ID, automatically handling duplicates.
           const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
-          // Convert the Map values back to an array.
           return Array.from(uniqueFactsMap.values());
         });
 
@@ -68,17 +61,16 @@ export default function Home() {
 
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, settingsKey]); // We intentionally omit other dependencies to control the fetch trigger precisely.
+  }, [page, settingsKey]);
 
   // This effect handles the infinite scroll trigger.
   useEffect(() => {
-    // When the sentinel div is visible and we have more items, increment the page to trigger the fetch effect.
     if (isIntersecting && hasMore && !isLoading) {
       setPage((prevPage) => prevPage + 1);
     }
   }, [isIntersecting, hasMore, isLoading]);
 
-  // This function now only resets state. It doesn't trigger a fetch directly.
+  // This function now only resets state.
   const handleSettingsChange = useCallback(
     (newLanguage: string, newLevel: string) => {
       setLanguage(newLanguage);
@@ -86,19 +78,26 @@ export default function Home() {
       setFacts([]);
       setPage(0);
       setHasMore(true);
-      setSettingsKey((prevKey) => prevKey + 1); // This change will trigger the main fetch effect.
+      setSettingsKey((prevKey) => prevKey + 1);
     },
     [],
   );
 
   return (
     <main className="flex flex-col items-center min-h-screen">
-      <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <div className="w-full max-w-2xl flex items-center justify-between p-3 px-5">
-          <div className="text-sm font-semibold">Brevito</div>
-          <OptionsMenu onSettingsChange={handleSettingsChange} />
+      <header className="w-full flex justify-center border-b border-b-foreground/10 sticky top-0 bg-background/95 backdrop-blur-sm z-10 p-4">
+        <div className="w-full max-w-2xl relative flex justify-center items-center">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold">Brevito</h1>
+            <p className="text-sm text-muted-foreground">
+              Learn while you doomscroll
+            </p>
+          </div>
+          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+            <OptionsMenu onSettingsChange={handleSettingsChange} />
+          </div>
         </div>
-      </nav>
+      </header>
       <div className="flex-1 w-full flex flex-col items-center p-4">
         <div className="w-full max-w-2xl flex flex-col gap-4">
           {facts.map((fact) => (
@@ -110,7 +109,6 @@ export default function Home() {
             />
           ))}
 
-          {/* Sentinel for infinite scroll, only rendered when there are more facts and we are not currently loading */}
           {hasMore && !isLoading && <div ref={ref} className="h-1" />}
 
           {isLoading && (
