@@ -1,0 +1,16 @@
+INSERT INTO "public"."fun_facts" (english_text) VALUES
+('A group of flamingos is called a flamboyance.'),
+('The unicorn is the national animal of Scotland.'),
+('Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible.'),
+('A single cloud can weigh more than 1 million pounds.'),
+('The heart of a shrimp is located in its head.'),
+('Bananas are berries, but strawberries are not.'),
+('An octopus has three hearts.'),
+('There are more fake flamingos in the world than real ones.'),
+('A snail can sleep for three years.'),
+('The Eiffel Tower can be 15 cm taller during the summer due to thermal expansion.'),
+('It is impossible for most people to lick their own elbow.'),
+('A crocodile cannot stick its tongue out.'),
+('The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.'),
+('A cow gives nearly 200,000 glasses of milk in a lifetime.'),
+('Wombat poop is cube-shaped.');
