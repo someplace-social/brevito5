@@ -119,7 +119,7 @@ export default function Home() {
           {error && <p className="text-center text-red-500 py-4">{error}</p>}
           {!hasMore && facts.length > 0 && (
             <p className="text-center text-muted-foreground py-4">
-              You've reached the end!
+              You&apos;ve reached the end!
             </p>
           )}
         </div>
