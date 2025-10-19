@@ -14,9 +14,9 @@ type GeminiApiResponse = {
 };
 
 export async function POST(request: Request) {
-  const { word, language } = await request.json();
+  const { word, sourceLanguage, targetLanguage } = await request.json();
 
-  if (!word || !language) {
+  if (!word || !sourceLanguage || !targetLanguage) {
     return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
@@ -26,13 +26,14 @@ export async function POST(request: Request) {
   }
 
   const prompt = `
-    Analyze the ${language} word "${word}".
+    Analyze the ${sourceLanguage} word "${word}".
+    The user's native language is ${targetLanguage}.
     Provide the response ONLY as a valid JSON object with no other text, explanations, or markdown formatting.
     The JSON object must have this exact structure:
     {
       "rootWord": "The root or infinitive form of the word. If not applicable, use the original word.",
-      "otherMeanings": ["A list of 2-3 common English meanings or synonyms for the word."],
-      "exampleSentences": ["An example sentence in ${language} using the original word.", "A second example sentence in ${language}."]
+      "otherMeanings": ["A list of 2-3 common ${targetLanguage} meanings or synonyms for the word."],
+      "exampleSentences": ["An example sentence in ${sourceLanguage} using the original word.", "A second example sentence in ${sourceLanguage}."]
     }
   `;
 

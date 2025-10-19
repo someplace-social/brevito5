@@ -1,12 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-// The simplified structure for our translation response
 export type TranslationData = {
   primaryTranslation: string;
 };
 
-// The structure of the DeepL API response
 type DeepLApiResponse = {
   translations: Array<{
     detected_source_language: string;
@@ -15,46 +13,35 @@ type DeepLApiResponse = {
 };
 
 export async function POST(request: Request) {
-  const { word, factId, language, level } = await request.json();
+  const { word, factId, level, sourceLanguage, targetLanguage } = await request.json();
 
-  if (!word || !factId || !language || !level) {
-    return NextResponse.json(
-      { error: "Missing required parameters" },
-      { status: 400 },
-    );
+  if (!word || !factId || !level || !sourceLanguage || !targetLanguage) {
+    return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
   const supabase = await createClient();
 
-  // 1. Check for existing word translation in our cache
-  const { data: existingTranslation, error: existingError } = await supabase
+  // 1. Check cache
+  const { data: existingTranslation } = await supabase
     .from("word_translations")
     .select("translation")
     .eq("word", word)
-    .eq("language", language)
+    .eq("language", sourceLanguage) // We cache based on the source language word
     .single();
-
-  if (existingError && existingError.code !== "PGRST116") {
-    return NextResponse.json(
-      { error: existingError.message },
-      { status: 500 },
-    );
-  }
 
   if (existingTranslation) {
     return NextResponse.json({ translation: existingTranslation.translation });
   }
 
-  // 2. If not found, call the DeepL API
+  // 2. Call DeepL API
   const deepLKey = process.env.DEEPL_API_KEY;
   if (!deepLKey) {
-    return NextResponse.json(
-      { error: "Translation API key is not configured" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Translation API key is not configured" }, { status: 500 });
   }
 
   let primaryTranslation = "";
+  // DeepL requires a two-letter language code (e.g., "EN-US", "EN", "ES")
+  const targetLangCode = targetLanguage.slice(0, 2).toUpperCase();
 
   try {
     const response = await fetch("https://api-free.deepl.com/v2/translate", {
@@ -65,7 +52,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         text: [word],
-        target_lang: "EN", // We always want to translate to English
+        target_lang: targetLangCode,
       }),
     });
 
@@ -85,28 +72,21 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Error fetching from DeepL:", error);
-    return NextResponse.json(
-      { error: "Failed to get a valid translation." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to get a valid translation." }, { status: 500 });
   }
   
   const translationData: TranslationData = { primaryTranslation };
 
-  // 3. Insert the new translation into our cache
-  const { error: insertError } = await supabase
+  // 3. Insert into cache
+  await supabase
     .from("word_translations")
     .insert({
-      fact_id: factId, // Retain for potential future use
-      language,
+      fact_id: factId,
+      language: sourceLanguage, // Cache is keyed by the original word's language
       level,
       word,
       translation: translationData,
     });
-
-  if (insertError) {
-    console.error("Failed to cache word translation:", insertError.message);
-  }
 
   return NextResponse.json({ translation: translationData });
 }
