@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   const { data: facts, error } = await supabase
-    .from("fun_facts")
+    .from("og_facts")
     .select("id")
     .order("created_at", { ascending: false })
     .range(start, end);
