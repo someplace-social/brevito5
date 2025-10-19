@@ -163,12 +163,19 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             ) : error ? (
               <p className="text-destructive">{error}</p>
             ) : (
-              <p className={`leading-relaxed ${fontSize}`}>
+              <p 
+                className={`leading-relaxed ${fontSize}`}
+                onContextMenu={(e) => e.preventDefault()}
+              >
                 {content}
               </p>
             )}
           </CardContent>
-          <PopoverContent className="w-auto p-0" side="top" align="center">
+          <PopoverContent 
+            className="w-auto p-0 translate-z-0" 
+            side="top" 
+            align="center"
+          >
             {isLoadingTranslation && <p className="px-3 py-2 text-sm">Translating...</p>}
             {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
             {translation && (
