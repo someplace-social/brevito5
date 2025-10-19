@@ -12,11 +12,12 @@ import { WordAnalysisDrawer } from "./word-analysis-drawer";
 
 type FactCardProps = {
   factId: string;
-  language: string;
+  contentLanguage: string;
+  translationLanguage: string;
   level: string;
 };
 
-export function FactCard({ factId, language, level }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -45,7 +46,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
           const response = await fetch("/api/get-fact-content", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ factId, language, level }),
+            body: JSON.stringify({ factId, language: contentLanguage, level }),
           });
           if (!response.ok) throw new Error("Failed to fetch fact content");
           const data = await response.json();
@@ -56,17 +57,12 @@ export function FactCard({ factId, language, level }: FactCardProps) {
       };
       fetchContent();
     }
-  }, [factId, isIntersecting, language, level]);
+  }, [factId, isIntersecting, contentLanguage, level]);
 
   // Effect to handle text selection with debouncing
   useEffect(() => {
     const handleSelectionChange = () => {
-      // Clear any existing timer
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-
-      // Set a new timer
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
         if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
@@ -87,16 +83,12 @@ export function FactCard({ factId, language, level }: FactCardProps) {
         } else {
           setPopoverOpen(false);
         }
-      }, 300); // Wait for 300ms of no selection activity
+      }, 300);
     };
-    
     document.addEventListener("selectionchange", handleSelectionChange);
-    
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, [popoverOpen, selectedText]);
 
@@ -113,7 +105,10 @@ export function FactCard({ factId, language, level }: FactCardProps) {
         const response = await fetch("/api/translate-word", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word: selectedText, factId, language, level }),
+          body: JSON.stringify({ word: selectedText, factId, level,
+            sourceLanguage: contentLanguage, 
+            targetLanguage: translationLanguage 
+          }),
         });
         if (!response.ok) throw new Error("Translation failed");
         const data = await response.json();
@@ -125,13 +120,12 @@ export function FactCard({ factId, language, level }: FactCardProps) {
       }
     };
     fetchTranslation();
-  }, [selectedText, popoverOpen, factId, language, level]);
+  }, [selectedText, popoverOpen, factId, contentLanguage, translationLanguage, level]);
 
   // Handler for the "Learn More" button
   const handleLearnMore = async () => {
     setPopoverOpen(false);
     setDrawerOpen(true);
-    
     if (!analysis) {
       setIsLoadingAnalysis(true);
       setAnalysisError(null);
@@ -139,7 +133,11 @@ export function FactCard({ factId, language, level }: FactCardProps) {
         const response = await fetch("/api/get-word-analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word: selectedText, language }),
+          body: JSON.stringify({ 
+            word: selectedText, 
+            sourceLanguage: contentLanguage,
+            targetLanguage: translationLanguage 
+          }),
         });
         if (!response.ok) throw new Error("Analysis failed");
         const data = await response.json();
