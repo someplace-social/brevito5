@@ -107,7 +107,7 @@ export default function Home() {
               factId={fact.id}
               language={language}
               level={level}
-              loadDelay={index * 200} // Stagger each card's load by 200ms
+              loadDelay={index * 500} // Stagger each card's load by 500ms
             />
           ))}
 

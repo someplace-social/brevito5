@@ -1,32 +1,31 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export function useIntersectionObserver(options?: IntersectionObserverInit) {
   const [isIntersecting, setIntersecting] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [node, setNode] = useState<Element | null>(null);
+
+  const ref = useCallback((newNode: Element | null) => {
+    setNode(newNode);
+  }, []);
 
   useEffect(() => {
+    if (!node) {
+      return;
+    }
+
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         setIntersecting(true);
-        // Disconnect the observer once the element is visible
-        if (ref.current) {
-          observer.unobserve(ref.current);
-        }
+        observer.disconnect();
       }
     }, options);
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
+    observer.observe(node);
 
-    return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
-    };
-  }, [options]);
+    return () => observer.disconnect();
+  }, [node, options]);
 
   return { ref, isIntersecting };
 }
