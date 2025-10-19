@@ -16,13 +16,10 @@ export function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // When the component mounts on the client, set mounted to true.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // If the component is not yet mounted, we can show a skeleton loader.
-  // This prevents a hydration mismatch.
   if (!mounted) {
     return (
       <div className="grid grid-cols-4 items-center gap-4">
@@ -39,7 +36,7 @@ export function ThemeSwitcher() {
       <Label htmlFor="theme" className="text-right">
         Theme
       </Label>
-      <Select value={theme} onValueChange={setTheme}>
+      <Select value={theme ?? ""} onValueChange={setTheme}>
         <SelectTrigger className="col-span-3">
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>

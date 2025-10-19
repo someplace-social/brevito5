@@ -17,7 +17,7 @@ export default function Home() {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-base"); // Default font size
+  const [fontSize, setFontSize] = useState("text-lg"); // New default font size
   
   const [page, setPage] = useState(0);
   const [settingsKey, setSettingsKey] = useState(0);

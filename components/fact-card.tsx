@@ -15,7 +15,7 @@ type FactCardProps = {
   contentLanguage: string;
   translationLanguage: string;
   level: string;
-  fontSize: string; // New prop for font size
+  fontSize: string;
 };
 
 export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize }: FactCardProps) {
@@ -25,7 +25,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const cardRef = useRef<HTMLDivElement>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // --- State Management ---
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
@@ -39,7 +38,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
-  // Effect to fetch the main fact content
   useEffect(() => {
     if (isIntersecting) {
       const fetchContent = async () => {
@@ -60,7 +58,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   }, [factId, isIntersecting, contentLanguage, level]);
 
-  // Effect to handle text selection with debouncing
   useEffect(() => {
     const handleSelectionChange = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -93,7 +90,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     };
   }, [popoverOpen, selectedText]);
 
-  // Effect to fetch the initial DeepL translation
   useEffect(() => {
     if (!selectedText || !popoverOpen) {
       setTranslation(null);
@@ -123,7 +119,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     fetchTranslation();
   }, [selectedText, popoverOpen, factId, contentLanguage, translationLanguage, level]);
 
-  // Handler for the "Learn More" button
   const handleLearnMore = async () => {
     setPopoverOpen(false);
     setDrawerOpen(true);
@@ -178,7 +173,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
             {translation && (
               <div className="flex flex-col">
-                <p className="font-semibold px-3 py-2">{translation.primaryTranslation}</p>
+                <p className="font-semibold text-lg px-3 py-2">{translation.primaryTranslation}</p>
                 {isSingleWord && (
                   <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t" onClick={handleLearnMore}>
                     Learn More

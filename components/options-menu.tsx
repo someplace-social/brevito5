@@ -17,10 +17,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Settings, Type } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Slider } from "@/components/ui/slider";
 
 type OptionsMenuProps = {
   onSettingsChange: (
@@ -31,11 +31,14 @@ type OptionsMenuProps = {
   ) => void;
 };
 
+// Map slider numerical values to Tailwind CSS classes
+const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
+
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-base"); // Default font size
+  const [fontSize, setFontSize] = useState("text-lg"); // Default font size
 
   // Effect to load saved settings on mount
   useEffect(() => {
@@ -46,7 +49,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     if (savedContentLang) setContentLanguage(savedContentLang);
     if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
     if (savedLevel) setLevel(savedLevel);
-    if (savedFontSize) setFontSize(savedFontSize);
+    if (savedFontSize && fontSizes.includes(savedFontSize)) {
+      setFontSize(savedFontSize);
+    }
   }, []);
 
   // Effect to save settings when they change
@@ -57,6 +62,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     localStorage.setItem("brevito-font-size", fontSize);
     onSettingsChange(contentLanguage, translationLanguage, level, fontSize);
   }, [contentLanguage, translationLanguage, level, fontSize, onSettingsChange]);
+
+  const currentSizeIndex = fontSizes.indexOf(fontSize);
 
   return (
     <Sheet>
@@ -73,14 +80,11 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-4">
+          {/* Language and Level Selectors */}
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="content-language" className="text-right">
-              Content
-            </Label>
+            <Label className="text-right">Content</Label>
             <Select value={contentLanguage} onValueChange={setContentLanguage}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a language" />
-              </SelectTrigger>
+              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Spanish">Spanish</SelectItem>
                 <SelectItem value="French">French</SelectItem>
@@ -90,13 +94,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="translation-language" className="text-right">
-              Translate To
-            </Label>
+            <Label className="text-right">Translate To</Label>
             <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a language" />
-              </SelectTrigger>
+              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="English">English</SelectItem>
                 <SelectItem value="Spanish">Spanish</SelectItem>
@@ -107,13 +107,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="level" className="text-right">
-              Level
-            </Label>
+            <Label className="text-right">Level</Label>
             <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a level" />
-              </SelectTrigger>
+              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Beginner">Beginner</SelectItem>
                 <SelectItem value="Intermediate">Intermediate</SelectItem>
@@ -121,25 +117,22 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
+
+          {/* Font Size Slider */}
+          <div className="grid grid-cols-4 items-center gap-4 pt-2">
             <Label className="text-right">Font Size</Label>
-            <ToggleGroup 
-              type="single" 
-              value={fontSize} 
-              onValueChange={(value) => { if (value) setFontSize(value); }}
-              className="col-span-3 justify-start"
-            >
-              <ToggleGroupItem value="text-sm" aria-label="Small">
-                <Type className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="text-base" aria-label="Medium">
-                <Type className="h-5 w-5" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="text-lg" aria-label="Large">
-                <Type className="h-6 w-6" />
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <div className="col-span-3 flex items-center gap-2">
+              <span className="text-sm">A</span>
+              <Slider
+                value={[currentSizeIndex]}
+                onValueChange={(value) => setFontSize(fontSizes[value[0]])}
+                max={fontSizes.length - 1}
+                step={1}
+              />
+              <span className="text-xl">A</span>
+            </div>
           </div>
+          
           <ThemeSwitcher />
         </div>
       </SheetContent>
