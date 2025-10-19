@@ -19,8 +19,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
-import { Skeleton } from "./ui/skeleton";
+import { ThemeSwitcher } from "./theme-switcher";
 
 type OptionsMenuProps = {
   onSettingsChange: (language: string, level: string) => void;
@@ -29,12 +28,9 @@ type OptionsMenuProps = {
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [language, setLanguage] = useState("Spanish");
   const [level, setLevel] = useState("Beginner");
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
 
-  // Effect to handle client-side mounting and loading saved settings
+  // Effect to load saved settings on mount
   useEffect(() => {
-    setMounted(true);
     const savedLanguage = localStorage.getItem("brevito-language");
     const savedLevel = localStorage.getItem("brevito-level");
     if (savedLanguage) setLanguage(savedLanguage);
@@ -43,48 +39,10 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
 
   // Effect to save settings when they change
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("brevito-language", language);
-      localStorage.setItem("brevito-level", level);
-      onSettingsChange(language, level);
-    }
-  }, [language, level, onSettingsChange, mounted]);
-
-  const renderThemeSelector = () => {
-    if (!mounted) {
-      // Render a skeleton loader on the server and initial client render
-      return (
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="theme" className="text-right">
-            Theme
-          </Label>
-          <Skeleton className="h-9 w-full col-span-3" />
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="theme" className="text-right">
-          Theme
-        </Label>
-        <Select value={theme} onValueChange={setTheme}>
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select a theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="light">Daybreak</SelectItem>
-            <SelectItem value="dark">Midnight</SelectItem>
-            <SelectItem value="theme-dusk">Dusk</SelectItem>
-            <SelectItem value="theme-forest">Forest</SelectItem>
-            <SelectItem value="theme-meadow">Meadow</SelectItem>
-            <SelectItem value="theme-sage">Sage</SelectItem>
-            <SelectItem value="theme-eggplant">Eggplant</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  };
+    localStorage.setItem("brevito-language", language);
+    localStorage.setItem("brevito-level", level);
+    onSettingsChange(language, level);
+  }, [language, level, onSettingsChange]);
 
   return (
     <Sheet>
@@ -132,9 +90,10 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               </SelectContent>
             </Select>
           </div>
-          {renderThemeSelector()}
+          {/* Use the new, isolated theme switcher component */}
+          <ThemeSwitcher />
         </div>
       </SheetContent>
     </Sheet>
   );
-} 
+}
