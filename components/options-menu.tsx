@@ -30,19 +30,17 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [level, setLevel] = useState("Beginner");
   const [isClient, setIsClient] = useState(false);
   const { theme, setTheme } = useTheme();
-  
-  // Local state to ensure the UI updates instantly
-  const [currentTheme, setCurrentTheme] = useState<string | undefined>();
 
+  // This effect runs only once on the client to load saved settings.
   useEffect(() => {
     setIsClient(true);
-    setCurrentTheme(theme); // Sync local state with global theme on mount
     const savedLanguage = localStorage.getItem("brevito-language");
     const savedLevel = localStorage.getItem("brevito-level");
     if (savedLanguage) setLanguage(savedLanguage);
     if (savedLevel) setLevel(savedLevel);
-  }, [theme]);
+  }, []);
 
+  // This effect runs whenever language or level settings change to save them.
   useEffect(() => {
     if (isClient) {
       localStorage.setItem("brevito-language", language);
@@ -51,13 +49,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     }
   }, [language, level, onSettingsChange, isClient]);
 
-  const handleThemeChange = (newTheme: string) => {
-    setCurrentTheme(newTheme); // Update local state immediately for instant UI feedback
-    setTheme(newTheme); // Update the global theme
-  };
-
-  if (!isClient || !currentTheme) {
-    return null; // Don't render on the server or before theme is determined
+  if (!isClient) {
+    // Render nothing on the server to avoid hydration mismatch.
+    return null;
   }
 
   return (
@@ -110,7 +104,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="theme" className="text-right">
               Theme
             </Label>
-            <Select value={currentTheme} onValueChange={handleThemeChange}>
+            {/* Use defaultValue to make the component uncontrolled for instant UI feedback */}
+            <Select defaultValue={theme} onValueChange={setTheme}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a theme" />
               </SelectTrigger>
