@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Settings } from "lucide-react";
+import { Settings, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 type OptionsMenuProps = {
   onSettingsChange: (language: string, level: string) => void;
@@ -28,6 +29,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [language, setLanguage] = useState("Spanish");
   const [level, setLevel] = useState("Beginner");
   const [isClient, setIsClient] = useState(false);
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -60,10 +62,10 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
         <SheetHeader>
           <SheetTitle>Options</SheetTitle>
           <SheetDescription>
-            Choose your language and learning level.
+            Choose your language, level, and theme.
           </SheetDescription>
         </SheetHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="language" className="text-right">
               Language
@@ -94,6 +96,25 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
                 <SelectItem value="Advanced">Advanced</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Theme</Label>
+            <div className="col-span-3 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme("light")}
+              >
+                <Sun className="h-[1.2rem] w-[1.2rem]" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme("dark")}
+              >
+                <Moon className="h-[1.2rem] w-[1.2rem]" />
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
