@@ -3,13 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Skeleton } from "./ui/skeleton";
 import type { TranslationData } from "@/app/api/translate-word/route";
+import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
+import { Button } from "./ui/button";
+import { WordAnalysisDrawer } from "./word-analysis-drawer";
 
 type FactCardProps = {
   factId: string;
@@ -20,24 +19,27 @@ type FactCardProps = {
 export function FactCard({ factId, language, level }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { ref, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1,
-  });
-
-  // State for the translation popover
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
-  const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+  const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // State for the translation data itself
+  // --- State Management ---
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+
   const [translation, setTranslation] = useState<TranslationData | null>(null);
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
+  
+  const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Effect to fetch the main fact content
   useEffect(() => {
     if (isIntersecting) {
+      // Logic to fetch fact content
       const fetchContent = async () => {
         try {
           const response = await fetch("/api/get-fact-content", {
@@ -45,10 +47,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ factId, language, level }),
           });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to fetch fact content");
-          }
+          if (!response.ok) throw new Error("Failed to fetch fact content");
           const data = await response.json();
           setContent(data.content);
         } catch (err) {
@@ -59,76 +58,51 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     }
   }, [factId, isIntersecting, language, level]);
 
-  // Effect to handle text selection changes globally
+  // Effect to handle text selection
   useEffect(() => {
     const handleSelectionChange = () => {
       setTimeout(() => {
         const selection = window.getSelection();
-        
         if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-          if (popoverOpen) {
-            setPopoverOpen(false);
-          }
+          if (popoverOpen) setPopoverOpen(false);
           return;
         }
-
         const text = selection.toString().trim();
         if (text && text.length > 0) {
           const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
           const cardBounds = cardRef.current.getBoundingClientRect();
-          
-          setSelectionRect(new DOMRect(
-            rect.left - cardBounds.left,
-            rect.top - cardBounds.top,
-            rect.width,
-            rect.height
-          ));
-          
+          setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
           if (text !== selectedText) {
             setSelectedText(text);
+            setAnalysis(null); // Reset analysis for new word
           }
           setPopoverOpen(true);
         } else {
           setPopoverOpen(false);
         }
-      }, 50); // 50ms delay to avoid race condition with mobile OS menu
+      }, 50);
     };
-
     document.addEventListener("selectionchange", handleSelectionChange);
-
-    return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-    };
+    return () => document.removeEventListener("selectionchange", handleSelectionChange);
   }, [popoverOpen, selectedText]);
 
-  // Effect to fetch the translation when selected text changes
+  // Effect to fetch the initial DeepL translation
   useEffect(() => {
     if (!selectedText || !popoverOpen) {
       setTranslation(null);
       return;
     }
-
     const fetchTranslation = async () => {
       setIsLoadingTranslation(true);
       setTranslationError(null);
-      setTranslation(null);
       try {
         const response = await fetch("/api/translate-word", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            word: selectedText,
-            context: content,
-            language,
-            level,
-            factId,
-          }),
+          body: JSON.stringify({ word: selectedText, factId, language, level }),
         });
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || "Translation failed");
-        }
+        if (!response.ok) throw new Error("Translation failed");
         const data = await response.json();
         setTranslation(data.translation);
       } catch (err) {
@@ -137,25 +111,43 @@ export function FactCard({ factId, language, level }: FactCardProps) {
         setIsLoadingTranslation(false);
       }
     };
-
     fetchTranslation();
-  }, [selectedText, popoverOpen, content, language, level, factId]);
+  }, [selectedText, popoverOpen, factId, language, level]);
+
+  // Handler for the "Learn More" button
+  const handleLearnMore = async () => {
+    setPopoverOpen(false); // Close the small popover
+    setDrawerOpen(true);   // Open the big drawer
+    
+    // Fetch analysis if we don't already have it
+    if (!analysis) {
+      setIsLoadingAnalysis(true);
+      setAnalysisError(null);
+      try {
+        const response = await fetch("/api/get-word-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ word: selectedText, language }),
+        });
+        if (!response.ok) throw new Error("Analysis failed");
+        const data = await response.json();
+        setAnalysis(data.analysis);
+      } catch (err) {
+        setAnalysisError(err instanceof Error ? err.message : "An error occurred.");
+      } finally {
+        setIsLoadingAnalysis(false);
+      }
+    }
+  };
 
   const isLoading = !content && !error;
+  const isSingleWord = selectedText && !selectedText.includes(" ");
 
   return (
     <div ref={ref}>
       <Card ref={cardRef} className="w-full min-h-[100px] relative">
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverAnchor
-            style={{
-              position: 'absolute',
-              top: selectionRect?.y,
-              left: selectionRect?.x,
-              width: selectionRect?.width,
-              height: selectionRect?.height,
-            }}
-          />
+          <PopoverAnchor style={{ position: 'absolute', top: selectionRect?.y, left: selectionRect?.x, width: selectionRect?.width, height: selectionRect?.height }} />
           <CardContent className="p-6">
             {isLoading ? (
               <div className="space-y-2">
@@ -165,23 +157,36 @@ export function FactCard({ factId, language, level }: FactCardProps) {
             ) : error ? (
               <p className="text-destructive">{error}</p>
             ) : (
-              <p className="leading-relaxed">
-                {content}
-              </p>
+              <p className="leading-relaxed">{content}</p>
             )}
           </CardContent>
-          <PopoverContent className="w-80 p-4" side="top" align="center">
-            {isLoadingTranslation && <p>Translating...</p>}
-            {translationError && <p className="text-destructive">{translationError}</p>}
+          <PopoverContent className="w-auto p-2" side="top" align="center">
+            {isLoadingTranslation && <p className="px-2 py-1 text-sm">Translating...</p>}
+            {translationError && <p className="px-2 py-1 text-sm text-destructive">{translationError}</p>}
             {translation && (
-              <div className="space-y-2">
-                <p className="text-lg font-bold">{translation.primaryTranslation}</p>
-                <p className="text-sm text-muted-foreground">Translated by DeepL</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{translation.primaryTranslation}</p>
+                {isSingleWord && (
+                  <Button variant="ghost" size="sm" className="h-auto px-2 py-1" onClick={handleLearnMore}>
+                    Learn More
+                  </Button>
+                )}
               </div>
             )}
           </PopoverContent>
         </Popover>
       </Card>
+
+      {/* The Analysis Drawer */}
+      <WordAnalysisDrawer
+        isOpen={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        selectedText={selectedText}
+        initialTranslation={translation?.primaryTranslation || ""}
+        analysis={analysis}
+        isLoading={isLoadingAnalysis}
+        error={analysisError}
+      />
     </div>
   );
 }
