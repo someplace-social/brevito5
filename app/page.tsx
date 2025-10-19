@@ -42,7 +42,7 @@ export default function Home() {
         if (!response.ok) {
           throw new Error("Failed to fetch facts");
         }
-        const newFacts = await response.json();
+        const newFacts: Fact[] = await response.json();
 
         if (newFacts.length < PAGE_LIMIT) {
           setHasMore(false);
@@ -51,8 +51,10 @@ export default function Home() {
         // De-duplicate facts before setting state to prevent key errors
         setFacts((prevFacts) => {
           const combinedFacts = page === 0 ? newFacts : [...prevFacts, ...newFacts];
-          const uniqueFacts = Array.from(new Map(combinedFacts.map(fact => [fact.id, fact])).values());
-          return uniqueFacts;
+          // Create a Map to store facts by their unique ID, automatically handling duplicates.
+          const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
+          // Convert the Map values back to an array.
+          return Array.from(uniqueFactsMap.values());
         });
 
       } catch (err) {
