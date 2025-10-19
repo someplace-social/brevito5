@@ -114,15 +114,15 @@ type FactCardProps = {
 export function FactCard({ factId, language, level, loadDelay }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
   });
-  const [wasIntersecting, setWasIntersecting] = useState(false);
 
   useEffect(() => {
-    if (isIntersecting && !wasIntersecting) {
-      setWasIntersecting(true);
+    // Trigger fetch only if the card is visible and hasn't been fetched yet.
+    if (isIntersecting && !hasFetched) {
+      setHasFetched(true); // Mark as fetched immediately to prevent re-fetching.
 
       const fetchContent = async () => {
         try {
@@ -142,8 +142,6 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Could not load content.";
           setError(errorMessage);
-        } finally {
-          setIsLoading(false);
         }
       };
 
@@ -153,7 +151,10 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
 
       return () => clearTimeout(timer);
     }
-  }, [factId, isIntersecting, wasIntersecting, language, level, loadDelay]);
+  }, [factId, isIntersecting, hasFetched, language, level, loadDelay]);
+
+  // A card is loading if we haven't received content or an error yet.
+  const isLoading = !content && !error;
 
   return (
     <Card ref={ref} className="w-full min-h-[100px]">

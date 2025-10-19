@@ -16,14 +16,17 @@ export function useIntersectionObserver(options?: IntersectionObserverInit) {
     }
 
     const observer = new IntersectionObserver(([entry]) => {
+      // We only care about the transition from not-intersecting to intersecting.
       if (entry.isIntersecting) {
         setIntersecting(true);
-        observer.disconnect();
+        // Stop observing the element once it has been seen.
+        observer.unobserve(node);
       }
     }, options);
 
     observer.observe(node);
 
+    // Cleanup: disconnect the observer when the component unmounts.
     return () => observer.disconnect();
   }, [node, options]);
 
