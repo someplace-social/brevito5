@@ -208,4 +208,4 @@ export function FactCard({ factId, language, level }: FactCardProps) {
       </Card>
     </div>
   );
-}
+} 
