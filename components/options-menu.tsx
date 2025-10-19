@@ -104,8 +104,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="theme" className="text-right">
               Theme
             </Label>
-            {/* Use defaultValue to make the component uncontrolled for instant UI feedback */}
-            <Select defaultValue={theme} onValueChange={setTheme}>
+            <Select value={theme} onValueChange={setTheme}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a theme" />
               </SelectTrigger>
