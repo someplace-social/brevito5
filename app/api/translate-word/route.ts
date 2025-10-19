@@ -1,31 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-type GeminiApiResponse = {
-  candidates?: Array<{
-    content: {
-      parts: Array<{
-        text: string;
-      }>;
-    };
-    finishReason?: string;
-  }>;
-  error?: {
-    message: string;
-  };
-};
-
-// The structure we expect Gemini to return
+// The simplified structure for our translation response
 export type TranslationData = {
   primaryTranslation: string;
-  otherMeanings: string[];
-  exampleSentences: string[];
+};
+
+// The structure of the DeepL API response
+type DeepLApiResponse = {
+  translations: Array<{
+    detected_source_language: string;
+    text: string;
+  }>;
 };
 
 export async function POST(request: Request) {
-  const { word, context, language, level, factId } = await request.json();
+  const { word, factId, language, level } = await request.json();
 
-  if (!word || !context || !language || !level || !factId) {
+  if (!word || !factId || !language || !level) {
     return NextResponse.json(
       { error: "Missing required parameters" },
       { status: 400 },
@@ -34,14 +26,12 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
-  // 1. Check for existing word translation
+  // 1. Check for existing word translation in our cache
   const { data: existingTranslation, error: existingError } = await supabase
     .from("word_translations")
     .select("translation")
-    .eq("fact_id", factId)
-    .eq("language", language)
-    .eq("level", level)
     .eq("word", word)
+    .eq("language", language)
     .single();
 
   if (existingError && existingError.code !== "PGRST116") {
@@ -52,94 +42,62 @@ export async function POST(request: Request) {
   }
 
   if (existingTranslation) {
-    console.log("--- Serving translation from cache ---");
     return NextResponse.json({ translation: existingTranslation.translation });
   }
 
-  // 2. If not found, call AI to translate
-  const genAIKey = process.env.GEN_AI_KEY;
-  if (!genAIKey) {
+  // 2. If not found, call the DeepL API
+  const deepLKey = process.env.DEEPL_API_KEY;
+  if (!deepLKey) {
     return NextResponse.json(
-      { error: "AI API key is not configured" },
+      { error: "Translation API key is not configured" },
       { status: 500 },
     );
   }
 
-  const prompt = `
-    TASK: Translate a word from ${language} to English and provide context.
-    SOURCE WORD: "${word}"
-    SOURCE SENTENCE: "${context}"
-    TARGET LANGUAGE FOR TRANSLATION: English
-    
-    INSTRUCTIONS:
-    1. The 'primaryTranslation' field MUST be the English translation of the source word.
-    2. Provide other meanings in English.
-    3. Provide example sentences in the original language (${language}).
-    4. Respond ONLY with a valid JSON object. Do not add any other text or markdown.
-    
-    JSON STRUCTURE:
-    {
-      "primaryTranslation": "The English translation of '${word}'.",
-      "otherMeanings": ["Other English meaning 1.", "Other English meaning 2."],
-      "exampleSentences": ["Example sentence in ${language} using '${word}'.", "Second example in ${language} using '${word}'."]
-    }
-  `;
-
-  console.log("--- Sending new prompt to AI ---");
-  console.log(prompt);
-
-  let translationData: TranslationData;
+  let primaryTranslation = "";
 
   try {
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${genAIKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
+    const response = await fetch("https://api-free.deepl.com/v2/translate", {
+      method: "POST",
+      headers: {
+        "Authorization": `DeepL-Auth-Key ${deepLKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        text: [word],
+        target_lang: "EN", // We always want to translate to English
+      }),
+    });
 
-    const aiData: GeminiApiResponse = await aiResponse.json();
-    
-    console.log("--- Received RAW response from AI ---");
-    console.log(JSON.stringify(aiData, null, 2));
-
-
-    if (!aiResponse.ok) {
-      console.error("AI API Error:", aiData);
-      const message = aiData?.error?.message ?? "AI API request failed";
-      return NextResponse.json({ error: message }, { status: aiResponse.status });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("DeepL API Error:", errorText);
+      throw new Error(`DeepL API request failed with status ${response.status}`);
     }
 
-    const text = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data: DeepLApiResponse = await response.json();
+    const translatedText = data?.translations?.[0]?.text;
 
-    if (!text) {
-      const finishReason = aiData?.candidates?.[0]?.finishReason;
-      const errorMessage = finishReason
-        ? `Content generation stopped: ${finishReason}`
-        : "Invalid response structure from AI.";
-      return NextResponse.json({ error: errorMessage }, { status: 500 });
+    if (!translatedText) {
+      throw new Error("Invalid response structure from DeepL API.");
     }
-
-    const cleanedText = text.trim().replace(/^```json\n|```$/g, "");
-    translationData = JSON.parse(cleanedText);
+    primaryTranslation = translatedText;
 
   } catch (error) {
-    console.error("Error fetching or parsing translation:", error);
+    console.error("Error fetching from DeepL:", error);
     return NextResponse.json(
-      { error: "Failed to get a valid translation from the AI service." },
+      { error: "Failed to get a valid translation." },
       { status: 500 },
     );
   }
+  
+  const translationData: TranslationData = { primaryTranslation };
 
-  // 3. Insert the new translation into the cache
+  // 3. Insert the new translation into our cache
   const { error: insertError } = await supabase
     .from("word_translations")
     .insert({
-      fact_id: factId,
+      fact_id: factId, // Retain for potential future use
       language,
       level,
       word,

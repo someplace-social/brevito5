@@ -174,28 +174,9 @@ export function FactCard({ factId, language, level }: FactCardProps) {
             {isLoadingTranslation && <p>Translating...</p>}
             {translationError && <p className="text-destructive">{translationError}</p>}
             {translation && (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <p className="text-lg font-bold">{translation.primaryTranslation}</p>
-                {translation.otherMeanings?.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-sm">Other Meanings:</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {translation.otherMeanings.map((meaning, i) => (
-                        <li key={i}>{meaning}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {translation.exampleSentences?.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-sm">Examples:</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {translation.exampleSentences.map((sentence, i) => (
-                        <li key={i}>{sentence}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <p className="text-sm text-muted-foreground">Translated by DeepL</p>
               </div>
             )}
           </PopoverContent>
