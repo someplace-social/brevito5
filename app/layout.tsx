@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Brevito",
   description: "Learn languages with fun facts.",
+  manifest: "/manifest.json",
 };
 
 const lexend = Lexend({
