@@ -28,12 +28,13 @@ type OptionsMenuProps = {
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [language, setLanguage] = useState("Spanish");
   const [level, setLevel] = useState("Beginner");
-  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // This effect runs only once on the client to load saved settings.
+  // This effect runs once on the client to set the mounted state
+  // and load saved language/level settings.
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
     const savedLanguage = localStorage.getItem("brevito-language");
     const savedLevel = localStorage.getItem("brevito-level");
     if (savedLanguage) setLanguage(savedLanguage);
@@ -42,17 +43,21 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
 
   // This effect runs whenever language or level settings change to save them.
   useEffect(() => {
-    if (isClient) {
+    if (mounted) {
       localStorage.setItem("brevito-language", language);
       localStorage.setItem("brevito-level", level);
       onSettingsChange(language, level);
     }
-  }, [language, level, onSettingsChange, isClient]);
+  }, [language, level, onSettingsChange, mounted]);
 
-  if (!isClient) {
-    // Render a placeholder or nothing on the server to avoid hydration mismatch.
-    // Returning null is the simplest approach.
-    return null;
+  // We must wait for the component to mount before rendering the UI.
+  // This prevents hydration mismatch errors and state inconsistencies.
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" disabled>
+        <Settings />
+      </Button>
+    );
   }
 
   return (
@@ -105,7 +110,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
             <Label htmlFor="theme" className="text-right">
               Theme
             </Label>
-            <Select value={theme} onValueChange={setTheme}>
+            {/* Using `theme ?? ""` ensures the value is never undefined */}
+            <Select value={theme ?? ""} onValueChange={setTheme}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a theme" />
               </SelectTrigger>
