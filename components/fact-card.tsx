@@ -62,50 +62,45 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   // Effect to handle text selection changes globally
   useEffect(() => {
     const handleSelectionChange = () => {
-      const selection = window.getSelection();
-      
-      // Ensure the selection is not null and is within this specific card
-      if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-        // If the selection is outside, ensure this card's popover is closed
-        if (popoverOpen) {
+      setTimeout(() => {
+        const selection = window.getSelection();
+        
+        if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
+          if (popoverOpen) {
+            setPopoverOpen(false);
+          }
+          return;
+        }
+
+        const text = selection.toString().trim();
+        if (text && text.length > 0) {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          const cardBounds = cardRef.current.getBoundingClientRect();
+          
+          setSelectionRect(new DOMRect(
+            rect.left - cardBounds.left,
+            rect.top - cardBounds.top,
+            rect.width,
+            rect.height
+          ));
+          
+          if (text !== selectedText) {
+            setSelectedText(text);
+          }
+          setPopoverOpen(true);
+        } else {
           setPopoverOpen(false);
         }
-        return;
-      }
-
-      const text = selection.toString().trim();
-      if (text && text.length > 0) {
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        const cardBounds = cardRef.current.getBoundingClientRect();
-        
-        setSelectionRect(new DOMRect(
-          rect.left - cardBounds.left,
-          rect.top - cardBounds.top,
-          rect.width,
-          rect.height
-        ));
-        
-        // Only update selected text if it's different, to avoid re-fetching
-        if (text !== selectedText) {
-          setSelectedText(text);
-        }
-        setPopoverOpen(true);
-      } else {
-        setPopoverOpen(false);
-      }
+      }, 50); // 50ms delay to avoid race condition with mobile OS menu
     };
 
-    // Listen for selection changes on the document
     document.addEventListener("selectionchange", handleSelectionChange);
-    // Also listen for touchend to catch deselection on mobile
-    document.addEventListener("touchend", handleSelectionChange);
 
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
-      document.removeEventListener("touchend", handleSelectionChange);
     };
-  }, [popoverOpen, selectedText]); // Re-run effect if popover state changes
+  }, [popoverOpen, selectedText]);
 
   // Effect to fetch the translation when selected text changes
   useEffect(() => {
