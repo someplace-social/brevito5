@@ -15,6 +15,13 @@ type GeminiApiResponse = {
   };
 };
 
+// The structure we expect Gemini to return
+export type TranslationData = {
+  primaryTranslation: string;
+  otherMeanings: string[];
+  exampleSentences: string[];
+};
+
 export async function POST(request: Request) {
   const { word, context, language, level, factId } = await request.json();
 
@@ -57,10 +64,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const prompt = `Provide a simple, one-to-two-word translation of the word "${word}" into ${language} as it is used in the following sentence. The user's level is ${level}. Do not explain or add any extra text, just provide the translation.
-Sentence: "${context}"`;
+  const prompt = `
+    Given the word "${word}" from the sentence "${context}", provide a detailed translation into ${language} for a ${level} level learner.
+    Respond ONLY with a valid JSON object. Do not include any other text, explanations, or markdown formatting.
+    The JSON object should have the following structure:
+    {
+      "primaryTranslation": "The single most likely translation of the word in this context.",
+      "otherMeanings": ["A list of 1-2 other common meanings for the word.", "Another meaning."],
+      "exampleSentences": ["An example sentence using the word in ${language}.", "A second example sentence."]
+    }
+  `;
 
-  let translation = "";
+  let translationData: TranslationData;
 
   try {
     const aiResponse = await fetch(
@@ -85,7 +100,6 @@ Sentence: "${context}"`;
     const text = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      console.error("No content generated or invalid response structure:", aiData);
       const finishReason = aiData?.candidates?.[0]?.finishReason;
       const errorMessage = finishReason
         ? `Content generation stopped: ${finishReason}`
@@ -93,11 +107,14 @@ Sentence: "${context}"`;
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
-    translation = text.trim();
+    // Clean the response and parse it as JSON
+    const cleanedText = text.trim().replace(/^```json\n|```$/g, "");
+    translationData = JSON.parse(cleanedText);
+
   } catch (error) {
-    console.error("Network or parsing error when calling AI API:", error);
+    console.error("Error fetching or parsing translation:", error);
     return NextResponse.json(
-      { error: "Failed to communicate with the AI service." },
+      { error: "Failed to get a valid translation from the AI service." },
       { status: 500 },
     );
   }
@@ -110,12 +127,12 @@ Sentence: "${context}"`;
       language,
       level,
       word,
-      translation,
+      translation: translationData, // Insert the JSON object
     });
 
   if (insertError) {
     console.error("Failed to cache word translation:", insertError.message);
   }
 
-  return NextResponse.json({ translation });
+  return NextResponse.json({ translation: translationData });
 }

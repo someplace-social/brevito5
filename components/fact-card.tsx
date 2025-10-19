@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "./ui/skeleton";
+import type { TranslationData } from "@/app/api/translate-word/route";
 
 // A self-contained component for a single, translatable word.
 function TranslatedWord({
@@ -24,31 +25,39 @@ function TranslatedWord({
   level: string;
   factId: string;
 }) {
-  const [translation, setTranslation] = useState("");
+  const [translation, setTranslation] = useState<TranslationData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpenChange = async (open: boolean) => {
     setIsOpen(open);
     // Fetch only when the popover is opened and we don't already have a translation.
-    if (open && !translation) {
-      setTranslation("Translating...");
+    if (open && !translation && !isLoading) {
+      setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch("/api/translate-word", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            word: word.replace(/[.,!?]/g, ""), // Clean punctuation from the word
+            word: word.replace(/[.,!?]/g, ""), // Clean punctuation
             context,
             language,
             level,
             factId,
           }),
         });
-        if (!response.ok) throw new Error("Translation failed");
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Translation failed");
+        }
         const data = await response.json();
         setTranslation(data.translation);
-      } catch {
-        setTranslation("Error");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred.");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -60,8 +69,36 @@ function TranslatedWord({
           {word}
         </span>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" side="top" align="center">
-        {translation}
+      <PopoverContent className="w-80 p-4" side="top" align="center">
+        {isLoading && <p>Translating...</p>}
+        {error && <p className="text-destructive">{error}</p>}
+        {translation && (
+          <div className="space-y-4">
+            <p className="text-lg font-bold">{translation.primaryTranslation}</p>
+            
+            {translation.otherMeanings?.length > 0 && (
+              <div className="space-y-1">
+                <h4 className="font-semibold text-sm">Other Meanings:</h4>
+                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                  {translation.otherMeanings.map((meaning, i) => (
+                    <li key={i}>{meaning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {translation.exampleSentences?.length > 0 && (
+              <div className="space-y-1">
+                <h4 className="font-semibold text-sm">Examples:</h4>
+                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                  {translation.exampleSentences.map((sentence, i) => (
+                    <li key={i}>{sentence}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -71,7 +108,7 @@ type FactCardProps = {
   factId: string;
   language: string;
   level: string;
-  loadDelay: number; // New prop for staggering requests
+  loadDelay: number;
 };
 
 export function FactCard({ factId, language, level, loadDelay }: FactCardProps) {
@@ -95,7 +132,6 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
 
           if (!response.ok) {
             const errorData = await response.json();
-            // Use the error message from the backend if available
             throw new Error(errorData.error || "Failed to fetch fact content");
           }
 
@@ -107,12 +143,11 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
         }
       };
 
-      // Delay the fetch to avoid hitting rate limits
       const timer = setTimeout(() => {
         fetchContent();
       }, loadDelay);
 
-      return () => clearTimeout(timer); // Cleanup timeout on unmount
+      return () => clearTimeout(timer);
     }
   }, [factId, isIntersecting, wasIntersecting, language, level, loadDelay]);
 
@@ -126,7 +161,6 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
           </div>
         ) : (
           <p className="leading-relaxed">
-            {/* Split the content into words and whitespace to make each word interactive */}
             {content.split(/(\s+)/).map((segment, index) => {
               if (/\s+/.test(segment) || segment === "") {
                 return <span key={index}>{segment}</span>;
