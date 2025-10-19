@@ -41,13 +41,13 @@ export function ThemeSwitcher() {
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="light">Daybreak</SelectItem>
-          <SelectItem value="dark">Midnight</SelectItem>
+          <SelectItem value="light">Day</SelectItem>
+          <SelectItem value="dark">Night</SelectItem>
           <SelectItem value="theme-dusk">Dusk</SelectItem>
-          <SelectItem value="theme-forest">Forest</SelectItem>
-          <SelectItem value="theme-meadow">Meadow</SelectItem>
           <SelectItem value="theme-sage">Sage</SelectItem>
           <SelectItem value="theme-eggplant">Eggplant</SelectItem>
+          <SelectItem value="theme-brick">Brick</SelectItem>
+          <SelectItem value="theme-river">River</SelectItem>
         </SelectContent>
       </Select>
     </div>
