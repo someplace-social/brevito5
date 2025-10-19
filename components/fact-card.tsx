@@ -10,6 +10,63 @@ import {
 } from "@/components/ui/popover";
 import { Skeleton } from "./ui/skeleton";
 
+// A self-contained component for a single, translatable word.
+function TranslatedWord({
+  word,
+  context,
+  language,
+  level,
+  factId,
+}: {
+  word: string;
+  context: string;
+  language: string;
+  level: string;
+  factId: string;
+}) {
+  const [translation, setTranslation] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleOpenChange = async (open: boolean) => {
+    setIsOpen(open);
+    // Fetch only when the popover is opened and we don't already have a translation.
+    if (open && !translation) {
+      setTranslation("Translating...");
+      try {
+        const response = await fetch("/api/translate-word", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            word: word.replace(/[.,!?]/g, ""), // Clean punctuation from the word
+            context,
+            language,
+            level,
+            factId,
+          }),
+        });
+        if (!response.ok) throw new Error("Translation failed");
+        const data = await response.json();
+        setTranslation(data.translation);
+      } catch {
+        setTranslation("Error");
+      }
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <span className="cursor-pointer hover:bg-accent rounded-sm">
+          {word}
+        </span>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-2" side="top" align="center">
+        {translation}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 type FactCardProps = {
   factId: string;
   language: string;
@@ -22,9 +79,6 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     threshold: 0.1,
   });
   const [wasIntersecting, setWasIntersecting] = useState(false);
-  const [translation, setTranslation] = useState("");
-  const [isPopoverOpen, setPopoverOpen] = useState(false);
-  const [currentTarget, setCurrentTarget] = useState<EventTarget | null>(null);
 
   useEffect(() => {
     if (isIntersecting && !wasIntersecting) {
@@ -53,89 +107,34 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     }
   }, [factId, isIntersecting, wasIntersecting, language, level]);
 
-  const handleWordClick = async (e: React.MouseEvent<HTMLSpanElement>) => {
-    const word = (e.target as HTMLElement).innerText.replace(/[.,!?]/g, "");
-    if (!word || !content) return;
-
-    setCurrentTarget(e.currentTarget);
-    setPopoverOpen(true);
-    setTranslation("Translating...");
-
-    try {
-      const response = await fetch("/api/translate-word", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          word,
-          context: content,
-          language,
-          level,
-          factId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Translation failed");
-      }
-
-      const data = await response.json();
-      setTranslation(data.translation);
-    } catch {
-      setTranslation("Error");
-    }
-  };
-
-  const renderContent = () => {
-    if (content === null) {
-      return (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-[250px]" />
-          <Skeleton className="h-4 w-[200px]" />
-        </div>
-      );
-    }
-
-    return (
-      <p>
-        {content.split(/(\s+)/).map((segment, index) =>
-          /\s+/.test(segment) ? (
-            <span key={index}>{segment}</span>
-          ) : (
-            <span
-              key={index}
-              className="cursor-pointer hover:bg-accent rounded-sm"
-              onClick={handleWordClick}
-            >
-              {segment}
-            </span>
-          ),
-        )}
-      </p>
-    );
-  };
-
   return (
     <Card ref={ref} className="w-full min-h-[100px]">
       <CardContent className="p-6">
-        <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>{renderContent()}</PopoverTrigger>
-          {currentTarget && (
-            <PopoverContent
-              className="w-auto"
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              align="center"
-              side="top"
-              // This is a trick to anchor the popover to the clicked word
-              style={{
-                position: "absolute",
-                left: `${(currentTarget as HTMLElement).offsetLeft}px`,
-                top: `${(currentTarget as HTMLElement).offsetTop - 40}px`,
-              }}
-            >
-              {translation}
-            </PopoverContent>
-          )}
-        </Popover>
+        {content === null ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full max-w-[300px]" />
+            <Skeleton className="h-4 w-full max-w-[250px]" />
+          </div>
+        ) : (
+          <p className="leading-relaxed">
+            {/* Split the content into words and whitespace to make each word interactive */}
+            {content.split(/(\s+)/).map((segment, index) => {
+              if (/\s+/.test(segment) || segment === "") {
+                return <span key={index}>{segment}</span>;
+              }
+              return (
+                <TranslatedWord
+                  key={index}
+                  word={segment}
+                  context={content}
+                  language={language}
+                  level={level}
+                  factId={factId}
+                />
+              );
+            })}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
