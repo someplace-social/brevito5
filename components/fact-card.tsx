@@ -103,7 +103,8 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     const selection = window.getSelection();
     const text = selection?.toString().trim();
 
-    if (text && text.length > 0) {
+    // Check if selection and text are valid before proceeding
+    if (selection && text && text.length > 0) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       const cardBounds = cardRef.current?.getBoundingClientRect();
