@@ -18,6 +18,7 @@ type WordAnalysisDrawerProps = {
   analysis: WordAnalysisData | null;
   isLoading: boolean;
   error: string | null;
+  fontSize: string; // New prop for font size
 };
 
 export function WordAnalysisDrawer({
@@ -28,7 +29,16 @@ export function WordAnalysisDrawer({
   analysis,
   isLoading,
   error,
+  fontSize,
 }: WordAnalysisDrawerProps) {
+  // Combine the initial translation with other meanings for a unified list
+  const allMeanings = analysis?.otherMeanings
+    ? [initialTranslation, ...analysis.otherMeanings]
+    : [initialTranslation];
+
+  // Remove duplicates that might come from the AI
+  const uniqueMeanings = [...new Set(allMeanings)];
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-lg">
@@ -46,27 +56,27 @@ export function WordAnalysisDrawer({
           )}
           {error && <p className="text-destructive">{error}</p>}
           {analysis && (
-            <div className="space-y-6 text-sm">
+            <div className="space-y-6">
               {analysis.rootWord && selectedText.toLowerCase() !== analysis.rootWord.toLowerCase() && (
                 <div>
-                  <h3 className="font-semibold text-muted-foreground mb-1">ROOT WORD</h3>
-                  <p className="italic">{analysis.rootWord}</p>
+                  <h3 className="font-semibold text-muted-foreground mb-1">ROOT</h3>
+                  <p className={`italic ${fontSize}`}>{analysis.rootWord}</p>
                 </div>
               )}
-              {analysis.otherMeanings && analysis.otherMeanings.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-muted-foreground mb-2">OTHER MEANINGS</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {analysis.otherMeanings.map((meaning, i) => (
-                      <li key={i}>{meaning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              
+              <div>
+                <h3 className="font-semibold text-muted-foreground mb-2">MEANINGS</h3>
+                <ul className={`list-disc list-inside space-y-1 ${fontSize}`}>
+                  {uniqueMeanings.map((meaning, i) => (
+                    <li key={i}>{meaning}</li>
+                  ))}
+                </ul>
+              </div>
+
               {analysis.exampleSentences && analysis.exampleSentences.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-muted-foreground mb-2">EXAMPLES</h3>
-                  <ul className="list-disc list-inside space-y-1 italic text-muted-foreground">
+                  <ul className={`list-disc list-inside space-y-1 italic text-muted-foreground ${fontSize}`}>
                     {analysis.exampleSentences.map((sentence, i) => (
                       <li key={i}>{sentence}</li>
                     ))}

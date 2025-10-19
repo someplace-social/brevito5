@@ -193,6 +193,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
         analysis={analysis}
         isLoading={isLoadingAnalysis}
         error={analysisError}
+        fontSize={fontSize}
       />
     </div>
   );
