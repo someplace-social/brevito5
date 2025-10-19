@@ -17,27 +17,36 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Settings } from "lucide-react";
+import { Settings, Type } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type OptionsMenuProps = {
-  onSettingsChange: (contentLanguage: string, translationLanguage: string, level: string) => void;
+  onSettingsChange: (
+    contentLanguage: string,
+    translationLanguage: string,
+    level: string,
+    fontSize: string,
+  ) => void;
 };
 
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
+  const [fontSize, setFontSize] = useState("text-base"); // Default font size
 
   // Effect to load saved settings on mount
   useEffect(() => {
     const savedContentLang = localStorage.getItem("brevito-content-language");
     const savedTranslationLang = localStorage.getItem("brevito-translation-language");
     const savedLevel = localStorage.getItem("brevito-level");
+    const savedFontSize = localStorage.getItem("brevito-font-size");
     if (savedContentLang) setContentLanguage(savedContentLang);
     if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
     if (savedLevel) setLevel(savedLevel);
+    if (savedFontSize) setFontSize(savedFontSize);
   }, []);
 
   // Effect to save settings when they change
@@ -45,8 +54,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     localStorage.setItem("brevito-content-language", contentLanguage);
     localStorage.setItem("brevito-translation-language", translationLanguage);
     localStorage.setItem("brevito-level", level);
-    onSettingsChange(contentLanguage, translationLanguage, level);
-  }, [contentLanguage, translationLanguage, level, onSettingsChange]);
+    localStorage.setItem("brevito-font-size", fontSize);
+    onSettingsChange(contentLanguage, translationLanguage, level, fontSize);
+  }, [contentLanguage, translationLanguage, level, fontSize, onSettingsChange]);
 
   return (
     <Sheet>
@@ -110,6 +120,25 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
                 <SelectItem value="Advanced">Advanced</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Font Size</Label>
+            <ToggleGroup 
+              type="single" 
+              value={fontSize} 
+              onValueChange={(value) => { if (value) setFontSize(value); }}
+              className="col-span-3 justify-start"
+            >
+              <ToggleGroupItem value="text-sm" aria-label="Small">
+                <Type className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="text-base" aria-label="Medium">
+                <Type className="h-5 w-5" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="text-lg" aria-label="Large">
+                <Type className="h-6 w-6" />
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
           <ThemeSwitcher />
         </div>

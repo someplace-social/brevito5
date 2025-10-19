@@ -15,9 +15,10 @@ type FactCardProps = {
   contentLanguage: string;
   translationLanguage: string;
   level: string;
+  fontSize: string; // New prop for font size
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -167,17 +168,19 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level }
             ) : error ? (
               <p className="text-destructive">{error}</p>
             ) : (
-              <p className="leading-relaxed">{content}</p>
+              <p className={`leading-relaxed ${fontSize}`}>
+                {content}
+              </p>
             )}
           </CardContent>
-          <PopoverContent className="w-auto p-2" side="top" align="center">
-            {isLoadingTranslation && <p className="px-2 py-1 text-sm">Translating...</p>}
-            {translationError && <p className="px-2 py-1 text-sm text-destructive">{translationError}</p>}
+          <PopoverContent className="w-auto p-0" side="top" align="center">
+            {isLoadingTranslation && <p className="px-3 py-2 text-sm">Translating...</p>}
+            {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
             {translation && (
-              <div className="flex items-center gap-2">
-                <p className="font-semibold">{translation.primaryTranslation}</p>
+              <div className="flex flex-col">
+                <p className="font-semibold px-3 py-2">{translation.primaryTranslation}</p>
                 {isSingleWord && (
-                  <Button variant="ghost" size="sm" className="h-auto px-2 py-1" onClick={handleLearnMore}>
+                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t" onClick={handleLearnMore}>
                     Learn More
                   </Button>
                 )}

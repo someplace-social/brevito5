@@ -17,6 +17,7 @@ export default function Home() {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
+  const [fontSize, setFontSize] = useState("text-base"); // Default font size
   
   const [page, setPage] = useState(0);
   const [settingsKey, setSettingsKey] = useState(0);
@@ -68,10 +69,11 @@ export default function Home() {
   }, [isIntersecting, hasMore, isLoading]);
 
   const handleSettingsChange = useCallback(
-    (newContentLang: string, newTranslationLang: string, newLevel: string) => {
+    (newContentLang: string, newTranslationLang: string, newLevel: string, newFontSize: string) => {
       setContentLanguage(newContentLang);
       setTranslationLanguage(newTranslationLang);
       setLevel(newLevel);
+      setFontSize(newFontSize);
       setFacts([]);
       setPage(0);
       setHasMore(true);
@@ -104,6 +106,7 @@ export default function Home() {
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
               level={level}
+              fontSize={fontSize}
             />
           ))}
 
