@@ -113,6 +113,8 @@ type FactCardProps = {
 
 export function FactCard({ factId, language, level, loadDelay }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { ref, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
   });
@@ -139,7 +141,9 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
           setContent(data.content);
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Could not load content.";
-          setContent(errorMessage);
+          setError(errorMessage);
+        } finally {
+          setIsLoading(false);
         }
       };
 
@@ -154,29 +158,33 @@ export function FactCard({ factId, language, level, loadDelay }: FactCardProps) 
   return (
     <Card ref={ref} className="w-full min-h-[100px]">
       <CardContent className="p-6">
-        {content === null ? (
+        {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-4 w-full max-w-[300px]" />
             <Skeleton className="h-4 w-full max-w-[250px]" />
           </div>
+        ) : error ? (
+          <p className="text-destructive">{error}</p>
         ) : (
-          <p className="leading-relaxed">
-            {content.split(/(\s+)/).map((segment, index) => {
-              if (/\s+/.test(segment) || segment === "") {
-                return <span key={index}>{segment}</span>;
-              }
-              return (
-                <TranslatedWord
-                  key={index}
-                  word={segment}
-                  context={content}
-                  language={language}
-                  level={level}
-                  factId={factId}
-                />
-              );
-            })}
-          </p>
+          content && (
+            <p className="leading-relaxed">
+              {content.split(/(\s+)/).map((segment, index) => {
+                if (/\s+/.test(segment) || segment === "") {
+                  return <span key={index}>{segment}</span>;
+                }
+                return (
+                  <TranslatedWord
+                    key={index}
+                    word={segment}
+                    context={content}
+                    language={language}
+                    level={level}
+                    factId={factId}
+                  />
+                );
+              })}
+            </p>
+          )
         )}
       </CardContent>
     </Card>
