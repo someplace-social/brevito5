@@ -1,15 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-// This is the structure of the response from the Gemini API
+// This is a more flexible structure for the Gemini API response
 type GeminiApiResponse = {
-  candidates: Array<{
+  candidates?: Array<{
     content: {
       parts: Array<{
         text: string;
       }>;
     };
+    finishReason?: string;
   }>;
+  error?: {
+    message: string;
+  };
 };
 
 export async function POST(request: Request) {
@@ -75,7 +79,7 @@ Sentence: "${fact.english_text}"`;
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${genAIKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${genAIKey}`,
       {
         method: "POST",
         headers: {
@@ -87,18 +91,30 @@ Sentence: "${fact.english_text}"`;
       },
     );
 
+    const aiData: GeminiApiResponse = await aiResponse.json();
+
     if (!aiResponse.ok) {
-      const errorBody = await aiResponse.json();
-      console.error("AI API Error:", errorBody);
-      throw new Error(`AI API request failed with status ${aiResponse.status}`);
+      console.error("AI API Error:", aiData);
+      const message = aiData?.error?.message ?? "AI API request failed";
+      return NextResponse.json({ error: message }, { status: aiResponse.status });
     }
 
-    const aiData: GeminiApiResponse = await aiResponse.json();
-    generatedText = aiData.candidates[0].content.parts[0].text.trim();
+    const text = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      console.error("No content generated or invalid response structure:", aiData);
+      const finishReason = aiData?.candidates?.[0]?.finishReason;
+      const errorMessage = finishReason
+        ? `Content generation stopped: ${finishReason}`
+        : "Invalid response structure from AI.";
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
+    }
+
+    generatedText = text.trim();
   } catch (error) {
-    console.error(error);
+    console.error("Network or parsing error when calling AI API:", error);
     return NextResponse.json(
-      { error: "Failed to generate content from AI." },
+      { error: "Failed to communicate with the AI service." },
       { status: 500 },
     );
   }

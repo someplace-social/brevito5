@@ -2,13 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 type GeminiApiResponse = {
-  candidates: Array<{
+  candidates?: Array<{
     content: {
       parts: Array<{
         text: string;
       }>;
     };
+    finishReason?: string;
   }>;
+  error?: {
+    message: string;
+  };
 };
 
 export async function POST(request: Request) {
@@ -60,7 +64,7 @@ Sentence: "${context}"`;
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${genAIKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${genAIKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,16 +74,30 @@ Sentence: "${context}"`;
       },
     );
 
+    const aiData: GeminiApiResponse = await aiResponse.json();
+
     if (!aiResponse.ok) {
-      throw new Error(`AI API request failed with status ${aiResponse.status}`);
+      console.error("AI API Error:", aiData);
+      const message = aiData?.error?.message ?? "AI API request failed";
+      return NextResponse.json({ error: message }, { status: aiResponse.status });
     }
 
-    const aiData: GeminiApiResponse = await aiResponse.json();
-    translation = aiData.candidates[0].content.parts[0].text.trim();
+    const text = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      console.error("No content generated or invalid response structure:", aiData);
+      const finishReason = aiData?.candidates?.[0]?.finishReason;
+      const errorMessage = finishReason
+        ? `Content generation stopped: ${finishReason}`
+        : "Invalid response structure from AI.";
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
+    }
+
+    translation = text.trim();
   } catch (error) {
-    console.error(error);
+    console.error("Network or parsing error when calling AI API:", error);
     return NextResponse.json(
-      { error: "Failed to get translation from AI." },
+      { error: "Failed to communicate with the AI service." },
       { status: 500 },
     );
   }
@@ -100,4 +118,4 @@ Sentence: "${context}"`;
   }
 
   return NextResponse.json({ translation });
-} 
+}
