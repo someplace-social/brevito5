@@ -52,6 +52,7 @@ export async function POST(request: Request) {
   }
 
   if (existingTranslation) {
+    console.log("--- Serving translation from cache ---");
     return NextResponse.json({ translation: existingTranslation.translation });
   }
 
@@ -65,15 +66,27 @@ export async function POST(request: Request) {
   }
 
   const prompt = `
-    Given the word "${word}" from the sentence "${context}", provide a detailed translation into English for a ${level} level learner.
-    Respond ONLY with a valid JSON object. Do not include any other text, explanations, or markdown formatting.
-    The JSON object should have the following structure:
+    TASK: Translate a word from ${language} to English and provide context.
+    SOURCE WORD: "${word}"
+    SOURCE SENTENCE: "${context}"
+    TARGET LANGUAGE FOR TRANSLATION: English
+    
+    INSTRUCTIONS:
+    1. The 'primaryTranslation' field MUST be the English translation of the source word.
+    2. Provide other meanings in English.
+    3. Provide example sentences in the original language (${language}).
+    4. Respond ONLY with a valid JSON object. Do not add any other text or markdown.
+    
+    JSON STRUCTURE:
     {
-      "primaryTranslation": "The single most likely translation of the word in this context.",
-      "otherMeanings": ["A list of 1-2 other common meanings for the word.", "Another meaning."],
-      "exampleSentences": ["An example sentence using the word in ${language}.", "A second example sentence."]
+      "primaryTranslation": "The English translation of '${word}'.",
+      "otherMeanings": ["Other English meaning 1.", "Other English meaning 2."],
+      "exampleSentences": ["Example sentence in ${language} using '${word}'.", "Second example in ${language} using '${word}'."]
     }
   `;
+
+  console.log("--- Sending new prompt to AI ---");
+  console.log(prompt);
 
   let translationData: TranslationData;
 
@@ -90,6 +103,10 @@ export async function POST(request: Request) {
     );
 
     const aiData: GeminiApiResponse = await aiResponse.json();
+    
+    console.log("--- Received RAW response from AI ---");
+    console.log(JSON.stringify(aiData, null, 2));
+
 
     if (!aiResponse.ok) {
       console.error("AI API Error:", aiData);
@@ -107,7 +124,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
-    // Clean the response and parse it as JSON
     const cleanedText = text.trim().replace(/^```json\n|```$/g, "");
     translationData = JSON.parse(cleanedText);
 
@@ -127,7 +143,7 @@ export async function POST(request: Request) {
       language,
       level,
       word,
-      translation: translationData, // Insert the JSON object
+      translation: translationData,
     });
 
   if (insertError) {
