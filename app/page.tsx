@@ -16,23 +16,28 @@ export default function Home() {
   const [error, setError] = useState("");
   const [language, setLanguage] = useState("Spanish");
   const [level, setLevel] = useState("Beginner");
-  const [settingsKey, setSettingsKey] = useState(0);
+  
+  // State to trigger fetching
   const [page, setPage] = useState(0);
+  const [settingsKey, setSettingsKey] = useState(0);
+
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
-  const loadMoreFacts = useCallback(
-    async (isNewSettings = false) => {
-      if (isLoading || (!hasMore && !isNewSettings)) return;
+  // This is now the single source of truth for fetching data.
+  // It runs whenever the page number or settings change.
+  useEffect(() => {
+    // Guard against fetching if we're already loading or if there's nothing left to fetch.
+    if (isLoading || !hasMore) return;
+
+    const fetchData = async () => {
       setIsLoading(true);
-
-      const currentPage = isNewSettings ? 0 : page;
-
+      setError("");
       try {
         const response = await fetch(
-          `/api/get-facts?page=${currentPage}&limit=${PAGE_LIMIT}`,
+          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}`,
         );
         if (!response.ok) {
           throw new Error("Failed to fetch facts");
@@ -41,14 +46,12 @@ export default function Home() {
 
         if (newFacts.length < PAGE_LIMIT) {
           setHasMore(false);
-        } else {
-          setHasMore(true);
         }
 
-        setFacts((prevFacts) =>
-          isNewSettings ? newFacts : [...prevFacts, ...newFacts],
-        );
-        setPage(currentPage + 1);
+        // If it's the first page (initial load or settings change), replace the facts.
+        // Otherwise, append the new facts to the existing list.
+        setFacts((prevFacts) => (page === 0 ? newFacts : [...prevFacts, ...newFacts]));
+
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred",
@@ -56,22 +59,21 @@ export default function Home() {
       } finally {
         setIsLoading(false);
       }
-    },
-    [page, hasMore, isLoading],
-  );
+    };
 
-  // Initial load
-  useEffect(() => {
-    loadMoreFacts();
-  }, [loadMoreFacts]);
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, settingsKey]); // We intentionally omit other dependencies to control the fetch trigger precisely.
 
-  // Load more on scroll
+  // This effect handles the infinite scroll trigger.
   useEffect(() => {
-    if (isIntersecting && hasMore) {
-      loadMoreFacts();
+    // When the sentinel div is visible and we have more items, increment the page to trigger the fetch effect.
+    if (isIntersecting && hasMore && !isLoading) {
+      setPage((prevPage) => prevPage + 1);
     }
-  }, [isIntersecting, hasMore, loadMoreFacts]);
+  }, [isIntersecting, hasMore, isLoading]);
 
+  // This function now only resets state. It doesn't trigger a fetch directly.
   const handleSettingsChange = useCallback(
     (newLanguage: string, newLevel: string) => {
       setLanguage(newLanguage);
@@ -79,17 +81,10 @@ export default function Home() {
       setFacts([]);
       setPage(0);
       setHasMore(true);
-      setSettingsKey((prevKey) => prevKey + 1);
+      setSettingsKey((prevKey) => prevKey + 1); // This change will trigger the main fetch effect.
     },
     [],
   );
-
-  // Effect to reload facts when settings change
-  useEffect(() => {
-    if (settingsKey > 0) {
-      loadMoreFacts(true);
-    }
-  }, [settingsKey, loadMoreFacts]);
 
   return (
     <main className="flex flex-col items-center min-h-screen">
@@ -110,8 +105,8 @@ export default function Home() {
             />
           ))}
 
-          {/* Sentinel for infinite scroll, only rendered when there are more facts */}
-          {hasMore && <div ref={ref} className="h-1" />}
+          {/* Sentinel for infinite scroll, only rendered when there are more facts and we are not currently loading */}
+          {hasMore && !isLoading && <div ref={ref} className="h-1" />}
 
           {isLoading && (
             <p className="text-center text-muted-foreground py-4">Loading...</p>
