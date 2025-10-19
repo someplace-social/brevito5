@@ -43,11 +43,12 @@ export function ThemeSwitcher() {
         <SelectContent>
           <SelectItem value="light">Day</SelectItem>
           <SelectItem value="dark">Night</SelectItem>
-          <SelectItem value="theme-dusk">Dusk</SelectItem>
+          <SelectItem value="theme-honey">Honey</SelectItem>
           <SelectItem value="theme-sage">Sage</SelectItem>
           <SelectItem value="theme-eggplant">Eggplant</SelectItem>
           <SelectItem value="theme-brick">Brick</SelectItem>
           <SelectItem value="theme-river">River</SelectItem>
+          <SelectItem value="theme-granite">Granite</SelectItem>
         </SelectContent>
       </Select>
     </div>

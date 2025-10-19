@@ -29,8 +29,7 @@ export default function RootLayout({
       <body className={`${lexend.className} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
         >
           {children}
         </ThemeProvider>
