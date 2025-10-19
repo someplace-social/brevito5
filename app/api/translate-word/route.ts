@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const prompt = `
-    Given the word "${word}" from the sentence "${context}", provide a detailed translation into ${language} for a ${level} level learner.
+    Given the word "${word}" from the sentence "${context}", provide a detailed translation into English for a ${level} level learner.
     Respond ONLY with a valid JSON object. Do not include any other text, explanations, or markdown formatting.
     The JSON object should have the following structure:
     {
