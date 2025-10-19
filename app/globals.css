@@ -101,29 +101,7 @@
     --ring: 89 25% 48%;
   }
 
-  .theme-coast {
-    --background: 180 2% 63%;
-    --foreground: 23 29% 18%;
-    --card: 180 5% 73%;
-    --card-foreground: 23 29% 18%;
-    --popover: 180 5% 73%;
-    --popover-foreground: 23 29% 18%;
-    --primary: 171 24% 58%;
-    --primary-foreground: 171 24% 98%;
-    --secondary: 23 29% 38%;
-    --secondary-foreground: 180 2% 95%;
-    --muted: 180 2% 55%;
-    --muted-foreground: 23 29% 25%;
-    --accent: 171 20% 65%;
-    --accent-foreground: 23 29% 18%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 180 2% 50%;
-    --input: 180 2% 50%;
-    --ring: 171 24% 58%;
-  }
-
-  .theme-autumn {
+  .theme-meadow {
     --background: 150 25% 25%;
     --foreground: 43 64% 90%;
     --card: 150 25% 30%;

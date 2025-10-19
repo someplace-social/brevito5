@@ -20,6 +20,7 @@ import { Label } from "./ui/label";
 import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { Skeleton } from "./ui/skeleton";
 
 type OptionsMenuProps = {
   onSettingsChange: (language: string, level: string) => void;
@@ -31,8 +32,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // This effect runs once on the client to set the mounted state
-  // and load saved language/level settings.
+  // Effect to handle client-side mounting and loading saved settings
   useEffect(() => {
     setMounted(true);
     const savedLanguage = localStorage.getItem("brevito-language");
@@ -41,7 +41,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     if (savedLevel) setLevel(savedLevel);
   }, []);
 
-  // This effect runs whenever language or level settings change to save them.
+  // Effect to save settings when they change
   useEffect(() => {
     if (mounted) {
       localStorage.setItem("brevito-language", language);
@@ -50,15 +50,41 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     }
   }, [language, level, onSettingsChange, mounted]);
 
-  // We must wait for the component to mount before rendering the UI.
-  // This prevents hydration mismatch errors and state inconsistencies.
-  if (!mounted) {
+  const renderThemeSelector = () => {
+    if (!mounted) {
+      // Render a skeleton loader on the server and initial client render
+      return (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="theme" className="text-right">
+            Theme
+          </Label>
+          <Skeleton className="h-9 w-full col-span-3" />
+        </div>
+      );
+    }
+
     return (
-      <Button variant="ghost" size="icon" disabled>
-        <Settings />
-      </Button>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="theme" className="text-right">
+          Theme
+        </Label>
+        <Select value={theme} onValueChange={setTheme}>
+          <SelectTrigger className="col-span-3">
+            <SelectValue placeholder="Select a theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="light">Daybreak</SelectItem>
+            <SelectItem value="dark">Midnight</SelectItem>
+            <SelectItem value="theme-dusk">Dusk</SelectItem>
+            <SelectItem value="theme-forest">Forest</SelectItem>
+            <SelectItem value="theme-meadow">Meadow</SelectItem>
+            <SelectItem value="theme-sage">Sage</SelectItem>
+            <SelectItem value="theme-eggplant">Eggplant</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     );
-  }
+  };
 
   return (
     <Sheet>
@@ -106,27 +132,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="theme" className="text-right">
-              Theme
-            </Label>
-            {/* Using `theme ?? ""` ensures the value is never undefined */}
-            <Select value={theme ?? ""} onValueChange={setTheme}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Daybreak</SelectItem>
-                <SelectItem value="dark">Midnight</SelectItem>
-                <SelectItem value="theme-dusk">Dusk</SelectItem>
-                <SelectItem value="theme-forest">Forest</SelectItem>
-                <SelectItem value="theme-coast">Coast</SelectItem>
-                <SelectItem value="theme-autumn">Autumn</SelectItem>
-                <SelectItem value="theme-sage">Sage</SelectItem>
-                <SelectItem value="theme-eggplant">Eggplant</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {renderThemeSelector()}
         </div>
       </SheetContent>
     </Sheet>
