@@ -35,7 +35,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
 
-  // Effect to fetch the main fact content when it becomes visible
+  // Effect to fetch the main fact content
   useEffect(() => {
     if (isIntersecting) {
       const fetchContent = async () => {
@@ -59,9 +59,57 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     }
   }, [factId, isIntersecting, language, level]);
 
+  // Effect to handle text selection changes globally
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      
+      // Ensure the selection is not null and is within this specific card
+      if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
+        // If the selection is outside, ensure this card's popover is closed
+        if (popoverOpen) {
+          setPopoverOpen(false);
+        }
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (text && text.length > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const cardBounds = cardRef.current.getBoundingClientRect();
+        
+        setSelectionRect(new DOMRect(
+          rect.left - cardBounds.left,
+          rect.top - cardBounds.top,
+          rect.width,
+          rect.height
+        ));
+        
+        // Only update selected text if it's different, to avoid re-fetching
+        if (text !== selectedText) {
+          setSelectedText(text);
+        }
+        setPopoverOpen(true);
+      } else {
+        setPopoverOpen(false);
+      }
+    };
+
+    // Listen for selection changes on the document
+    document.addEventListener("selectionchange", handleSelectionChange);
+    // Also listen for touchend to catch deselection on mobile
+    document.addEventListener("touchend", handleSelectionChange);
+
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("touchend", handleSelectionChange);
+    };
+  }, [popoverOpen, selectedText]); // Re-run effect if popover state changes
+
   // Effect to fetch the translation when selected text changes
   useEffect(() => {
-    if (!selectedText) {
+    if (!selectedText || !popoverOpen) {
       setTranslation(null);
       return;
     }
@@ -96,35 +144,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
     };
 
     fetchTranslation();
-  }, [selectedText, content, language, level, factId]);
-
-  // Handler for when the user selects text
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
-
-    // Check if selection and text are valid before proceeding
-    if (selection && text && text.length > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const cardBounds = cardRef.current?.getBoundingClientRect();
-      
-      if (cardBounds) {
-        // Make the position relative to the card
-        setSelectionRect(new DOMRect(
-          rect.left - cardBounds.left,
-          rect.top - cardBounds.top,
-          rect.width,
-          rect.height
-        ));
-      }
-
-      setSelectedText(text);
-      setPopoverOpen(true);
-    } else {
-      setPopoverOpen(false);
-    }
-  };
+  }, [selectedText, popoverOpen, content, language, level, factId]);
 
   const isLoading = !content && !error;
 
@@ -150,7 +170,7 @@ export function FactCard({ factId, language, level }: FactCardProps) {
             ) : error ? (
               <p className="text-destructive">{error}</p>
             ) : (
-              <p className="leading-relaxed" onMouseUp={handleTextSelection}>
+              <p className="leading-relaxed">
                 {content}
               </p>
             )}
