@@ -9,6 +9,27 @@ import {
 } from "@/components/ui/sheet";
 import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
 import { Skeleton } from "./ui/skeleton";
+import React from "react";
+
+// Helper component to render sentences with the selected word underlined
+const UnderlinedSentence = ({ sentence, word }: { sentence: string; word: string }) => {
+  if (!word) return <>{sentence}</>;
+  
+  // Create a case-insensitive regular expression to split the sentence
+  const parts = sentence.split(new RegExp(`(${word})`, 'gi'));
+  
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.toLowerCase() === word.toLowerCase() ? (
+          <u key={index}>{part}</u>
+        ) : (
+          <React.Fragment key={index}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
 
 type WordAnalysisDrawerProps = {
   isOpen: boolean;
@@ -18,7 +39,7 @@ type WordAnalysisDrawerProps = {
   analysis: WordAnalysisData | null;
   isLoading: boolean;
   error: string | null;
-  fontSize: string; // New prop for font size
+  fontSize: string;
 };
 
 export function WordAnalysisDrawer({
@@ -36,8 +57,8 @@ export function WordAnalysisDrawer({
     ? [initialTranslation, ...analysis.otherMeanings]
     : [initialTranslation];
 
-  // Remove duplicates that might come from the AI
-  const uniqueMeanings = [...new Set(allMeanings)];
+  // Remove duplicates AND any empty/falsy values to prevent blank bullets
+  const uniqueMeanings = [...new Set(allMeanings)].filter(Boolean);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -78,7 +99,9 @@ export function WordAnalysisDrawer({
                   <h3 className="font-semibold text-muted-foreground mb-2">EXAMPLES</h3>
                   <ul className={`list-disc list-inside space-y-1 italic text-muted-foreground ${fontSize}`}>
                     {analysis.exampleSentences.map((sentence, i) => (
-                      <li key={i}>{sentence}</li>
+                      <li key={i}>
+                        <UnderlinedSentence sentence={sentence} word={selectedText} />
+                      </li>
                     ))}
                   </ul>
                 </div>
