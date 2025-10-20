@@ -39,6 +39,14 @@ type OptionsMenuProps = {
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 const availableCategories = ["Science", "History", "Geography"];
 
+// Helper to compare category arrays
+const categoriesAreEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((val, index) => val === sortedB[index]);
+};
+
 export function OptionsMenu({
   contentLanguage,
   onContentLanguageChange,
@@ -51,25 +59,59 @@ export function OptionsMenu({
   selectedCategories,
   onSelectedCategoriesChange,
 }: OptionsMenuProps) {
-  const currentSizeIndex = fontSizes.indexOf(fontSize);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleCategoryToggle = (category: string) => {
-    const isCurrentlySelected = selectedCategories.includes(category);
-    
-    // If it's the last selected category, do nothing to prevent de-selection
-    if (isCurrentlySelected && selectedCategories.length === 1) {
-      return;
+  // Staged state for deferred updates
+  const [stagedContentLanguage, setStagedContentLanguage] = useState(contentLanguage);
+  const [stagedTranslationLanguage, setStagedTranslationLanguage] = useState(translationLanguage);
+  const [stagedLevel, setStagedLevel] = useState(level);
+  const [stagedCategories, setStagedCategories] = useState(selectedCategories);
+
+  // Sync staged state with parent props whenever the sheet is opened
+  useEffect(() => {
+    if (isOpen) {
+      setStagedContentLanguage(contentLanguage);
+      setStagedTranslationLanguage(translationLanguage);
+      setStagedLevel(level);
+      setStagedCategories(selectedCategories);
     }
+  }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories]);
 
-    const newCategories = isCurrentlySelected
-      ? selectedCategories.filter((c) => c !== category)
-      : [...selectedCategories, category];
-      
-    onSelectedCategoriesChange(newCategories);
+  const handleOpenChange = (open: boolean) => {
+    if (!open) { // Sheet is closing
+      // Check if any deferred settings have changed
+      const hasChanges =
+        stagedContentLanguage !== contentLanguage ||
+        stagedTranslationLanguage !== translationLanguage ||
+        stagedLevel !== level ||
+        !categoriesAreEqual(stagedCategories, selectedCategories);
+
+      // If there are changes, call all parent update functions
+      if (hasChanges) {
+        onContentLanguageChange(stagedContentLanguage);
+        onTranslationLanguageChange(stagedTranslationLanguage);
+        onLevelChange(stagedLevel);
+        onSelectedCategoriesChange(stagedCategories);
+      }
+    }
+    setIsOpen(open);
   };
 
+  const handleCategoryToggle = (category: string) => {
+    const isCurrentlySelected = stagedCategories.includes(category);
+    if (isCurrentlySelected && stagedCategories.length === 1) {
+      return; // Prevent deselecting the last category
+    }
+    const newCategories = isCurrentlySelected
+      ? stagedCategories.filter((c) => c !== category)
+      : [...stagedCategories, category];
+    setStagedCategories(newCategories);
+  };
+
+  const currentSizeIndex = fontSizes.indexOf(fontSize);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon">
           <Settings />
@@ -91,7 +133,7 @@ export function OptionsMenu({
                 <Toggle
                   key={category}
                   variant="outline"
-                  pressed={selectedCategories.includes(category)}
+                  pressed={stagedCategories.includes(category)}
                   onPressedChange={() => handleCategoryToggle(category)}
                   className="capitalize"
                 >
@@ -104,7 +146,7 @@ export function OptionsMenu({
           {/* Language and Level Selectors */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Content</Label>
-            <Select value={contentLanguage} onValueChange={onContentLanguageChange}>
+            <Select value={stagedContentLanguage} onValueChange={setStagedContentLanguage}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Spanish">Spanish</SelectItem>
@@ -116,7 +158,7 @@ export function OptionsMenu({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Translate To</Label>
-            <Select value={translationLanguage} onValueChange={onTranslationLanguageChange}>
+            <Select value={stagedTranslationLanguage} onValueChange={setStagedTranslationLanguage}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="English">English</SelectItem>
@@ -129,7 +171,7 @@ export function OptionsMenu({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Level</Label>
-            <Select value={level} onValueChange={onLevelChange}>
+            <Select value={stagedLevel} onValueChange={setStagedLevel}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Beginner">Beginner</SelectItem>
@@ -139,7 +181,7 @@ export function OptionsMenu({
             </Select>
           </div>
 
-          {/* Font Size Slider */}
+          {/* Font Size Slider (Instant Update) */}
           <div className="grid grid-cols-4 items-center gap-4 pt-2">
             <Label className="text-right">Font Size</Label>
             <div className="col-span-3 flex items-center gap-2">
@@ -154,6 +196,7 @@ export function OptionsMenu({
             </div>
           </div>
           
+          {/* Theme Switcher (Instant Update) */}
           <ThemeSwitcher />
         </div>
       </SheetContent>
