@@ -121,7 +121,7 @@ export function OptionsMenu({
         <SheetHeader>
           <SheetTitle>Options</SheetTitle>
           <SheetDescription>
-            Customize your learning experience.
+            Customize your feed.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-4">
@@ -149,6 +149,7 @@ export function OptionsMenu({
             <Select value={stagedContentLanguage} onValueChange={setStagedContentLanguage}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="English">English</SelectItem>
                 <SelectItem value="Spanish">Spanish</SelectItem>
                 <SelectItem value="French">French</SelectItem>
                 <SelectItem value="German">German</SelectItem>

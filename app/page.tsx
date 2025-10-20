@@ -75,7 +75,7 @@ export default function Home() {
       try {
         const categoriesQuery = selectedCategories.join(',');
         const response = await fetch(
-          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}`,
+          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
         );
         if (!response.ok) throw new Error("Failed to fetch facts");
         const newFacts: Fact[] = await response.json();
