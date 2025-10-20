@@ -54,7 +54,7 @@ export default function Home() {
         if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
           setSelectedCategories(parsedCategories);
         }
-      } catch (e) {
+      } catch {
         // Ignore malformed JSON in localStorage
       }
     }
