@@ -1,13 +1,17 @@
--- 1. Ensure the og_facts table has the correct columns
+-- 1. Clean up old schema: Drop the problematic 'english_text' column if it exists.
+ALTER TABLE public.og_facts
+DROP COLUMN IF EXISTS english_text;
+
+-- 2. Ensure the correct new columns exist.
 ALTER TABLE public.og_facts
 ADD COLUMN IF NOT EXISTS fact_text TEXT,
 ADD COLUMN IF NOT EXISTS category TEXT,
 ADD COLUMN IF NOT EXISTS subcategory TEXT;
 
--- 2. Clear all existing data from the tables
+-- 3. Clear all existing data from the tables to ensure a fresh start.
 TRUNCATE TABLE public.og_facts CASCADE;
 
--- 3. Insert the first 20 space facts
+-- 4. Insert the first 20 space facts.
 DO $$
 DECLARE
     fact_uuid UUID;
