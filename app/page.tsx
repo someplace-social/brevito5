@@ -12,7 +12,7 @@ type Fact = {
 };
 
 const PAGE_LIMIT = 5;
-const availableCategories = ["Science", "History", "Geography"];
+const availableCategories = ["Culture", "Geography", "History", "Human Body", "Miscellaneous", "Science"];
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 
 export default function Home() {

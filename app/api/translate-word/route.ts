@@ -12,6 +12,15 @@ type DeepLApiResponse = {
   }>;
 };
 
+// Maps frontend language names to DeepL API language codes
+const langCodeMap: { [key: string]: string } = {
+  English: "EN",
+  Spanish: "ES",
+  French: "FR",
+  German: "DE",
+  Italian: "IT",
+};
+
 export async function POST(request: Request) {
   const { word, factId, level, sourceLanguage, targetLanguage } = await request.json();
 
@@ -39,9 +48,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Translation API key is not configured" }, { status: 500 });
   }
 
+  const targetLangCode = langCodeMap[targetLanguage];
+  if (!targetLangCode) {
+    return NextResponse.json({ error: `Unsupported target language: ${targetLanguage}` }, { status: 400 });
+  }
+
   let primaryTranslation = "";
-  // DeepL requires a two-letter language code (e.g., "EN-US", "EN", "ES")
-  const targetLangCode = targetLanguage.slice(0, 2).toUpperCase();
 
   try {
     const response = await fetch("https://api-free.deepl.com/v2/translate", {

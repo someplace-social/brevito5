@@ -37,7 +37,7 @@ type OptionsMenuProps = {
 };
 
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
-const availableCategories = ["Science", "History", "Geography"];
+const availableCategories = ["Culture", "Geography", "History", "Human Body", "Miscellaneous", "Science"];
 
 // Helper to compare category arrays
 const categoriesAreEqual = (a: string[], b: string[]) => {
