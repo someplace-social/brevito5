@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data: facts, error } = await supabase
     .from("og_facts")
-    .select("id")
+    .select("id, category, subcategory")
     .order("created_at", { ascending: false })
     .range(start, end);
 

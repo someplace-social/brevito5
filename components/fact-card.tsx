@@ -16,9 +16,11 @@ type FactCardProps = {
   translationLanguage: string;
   level: string;
   fontSize: string;
+  category: string | null;
+  subcategory: string | null;
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -157,18 +159,28 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           <CardContent className="p-6">
             {isLoading ? (
               <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-4 w-full max-w-[300px]" />
                 <Skeleton className="h-4 w-full max-w-[250px]" />
               </div>
             ) : error ? (
               <p className="text-destructive">{error}</p>
             ) : (
-              <p 
-                className={`leading-relaxed ${fontSize}`}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                {content}
-              </p>
+              <>
+                {category && subcategory && (
+                  <div className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {category} &gt; {subcategory}
+                    </p>
+                  </div>
+                )}
+                <p 
+                  className={`leading-relaxed ${fontSize}`}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {content}
+                </p>
+              </>
             )}
           </CardContent>
           <PopoverContent 

@@ -7,6 +7,8 @@ import { useEffect, useState, useCallback } from "react";
 
 type Fact = {
   id: string;
+  category: string | null;
+  subcategory: string | null;
 };
 
 const PAGE_LIMIT = 5;
@@ -107,6 +109,8 @@ export default function Home() {
               translationLanguage={translationLanguage}
               level={level}
               fontSize={fontSize}
+              category={fact.category}
+              subcategory={fact.subcategory}
             />
           ))}
 
