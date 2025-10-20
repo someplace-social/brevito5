@@ -124,4 +124,4 @@ export function WordAnalysisDrawer({
       </SheetContent>
     </Sheet>
   );
-}
+} 
