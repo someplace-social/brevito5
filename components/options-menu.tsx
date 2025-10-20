@@ -18,61 +18,38 @@ import {
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Settings } from "lucide-react";
-import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type OptionsMenuProps = {
-  onSettingsChange: (
-    contentLanguage: string,
-    translationLanguage: string,
-    level: string,
-    fontSize: string,
-    categories: string[],
-  ) => void;
+  contentLanguage: string;
+  onContentLanguageChange: (value: string) => void;
+  translationLanguage: string;
+  onTranslationLanguageChange: (value: string) => void;
+  level: string;
+  onLevelChange: (value: string) => void;
+  fontSize: string;
+  onFontSizeChange: (value: string) => void;
+  selectedCategories: string[];
+  onSelectedCategoriesChange: (value: string[]) => void;
 };
 
-// Map slider numerical values to Tailwind CSS classes
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 const availableCategories = ["Science", "History", "Geography"];
 
-export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
-  const [contentLanguage, setContentLanguage] = useState("Spanish");
-  const [translationLanguage, setTranslationLanguage] = useState("English");
-  const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-lg");
-  const [selectedCategories, setSelectedCategories] = useState(availableCategories);
-
-  // Effect to load saved settings on mount
-  useEffect(() => {
-    const savedContentLang = localStorage.getItem("brevito-content-language");
-    const savedTranslationLang = localStorage.getItem("brevito-translation-language");
-    const savedLevel = localStorage.getItem("brevito-level");
-    const savedFontSize = localStorage.getItem("brevito-font-size");
-    const savedCategories = localStorage.getItem("brevito-categories");
-
-    if (savedContentLang) setContentLanguage(savedContentLang);
-    if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
-    if (savedLevel) setLevel(savedLevel);
-    if (savedFontSize && fontSizes.includes(savedFontSize)) {
-      setFontSize(savedFontSize);
-    }
-    if (savedCategories) {
-      setSelectedCategories(JSON.parse(savedCategories));
-    }
-  }, []);
-
-  // Effect to save settings when they change
-  useEffect(() => {
-    localStorage.setItem("brevito-content-language", contentLanguage);
-    localStorage.setItem("brevito-translation-language", translationLanguage);
-    localStorage.setItem("brevito-level", level);
-    localStorage.setItem("brevito-font-size", fontSize);
-    localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
-    onSettingsChange(contentLanguage, translationLanguage, level, fontSize, selectedCategories);
-  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, onSettingsChange]);
-
+export function OptionsMenu({
+  contentLanguage,
+  onContentLanguageChange,
+  translationLanguage,
+  onTranslationLanguageChange,
+  level,
+  onLevelChange,
+  fontSize,
+  onFontSizeChange,
+  selectedCategories,
+  onSelectedCategoriesChange,
+}: OptionsMenuProps) {
   const currentSizeIndex = fontSizes.indexOf(fontSize);
 
   return (
@@ -97,9 +74,8 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               type="multiple"
               value={selectedCategories}
               onValueChange={(value) => {
-                // Ensure at least one category is always selected
                 if (value.length > 0) {
-                  setSelectedCategories(value);
+                  onSelectedCategoriesChange(value);
                 }
               }}
               className="col-span-3 flex-wrap justify-start"
@@ -115,7 +91,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
           {/* Language and Level Selectors */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Content</Label>
-            <Select value={contentLanguage} onValueChange={setContentLanguage}>
+            <Select value={contentLanguage} onValueChange={onContentLanguageChange}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Spanish">Spanish</SelectItem>
@@ -127,7 +103,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Translate To</Label>
-            <Select value={translationLanguage} onValueChange={setTranslationLanguage}>
+            <Select value={translationLanguage} onValueChange={onTranslationLanguageChange}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="English">English</SelectItem>
@@ -140,7 +116,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Level</Label>
-            <Select value={level} onValueChange={setLevel}>
+            <Select value={level} onValueChange={onLevelChange}>
               <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Beginner">Beginner</SelectItem>
@@ -157,7 +133,7 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
               <span className="text-sm">A</span>
               <Slider
                 value={[currentSizeIndex]}
-                onValueChange={(value) => setFontSize(fontSizes[value[0]])}
+                onValueChange={(value) => onFontSizeChange(fontSizes[value[0]])}
                 max={fontSizes.length - 1}
                 step={1}
               />
