@@ -10,6 +10,8 @@ import {
 import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
 import { Skeleton } from "./ui/skeleton";
 import React from "react";
+import { Button } from "./ui/button";
+import { ArrowUpRight } from "lucide-react";
 
 // Helper component to render sentences with the selected word underlined
 const UnderlinedSentence = ({ sentence, word }: { sentence: string; word: string }) => {
@@ -60,6 +62,8 @@ export function WordAnalysisDrawer({
   // Remove duplicates AND any empty/falsy values to prevent blank bullets
   const uniqueMeanings = [...new Set(allMeanings)].filter(Boolean);
 
+  const spanishDictUrl = `https://www.spanishdict.com/translate/${encodeURIComponent(selectedText)}`;
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-lg">
@@ -108,6 +112,14 @@ export function WordAnalysisDrawer({
               )}
             </div>
           )}
+        </div>
+        <div className="border-t pt-4">
+          <Button variant="ghost" className="w-full justify-between" asChild>
+            <a href={spanishDictUrl} target="_blank" rel="noopener noreferrer">
+              Learn Even More
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
