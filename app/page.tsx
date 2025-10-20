@@ -12,6 +12,7 @@ type Fact = {
 };
 
 const PAGE_LIMIT = 5;
+const availableCategories = ["Science", "History", "Geography"];
 
 export default function Home() {
   const [facts, setFacts] = useState<Fact[]>([]);
@@ -19,7 +20,8 @@ export default function Home() {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-lg"); // New default font size
+  const [fontSize, setFontSize] = useState("text-lg");
+  const [selectedCategories, setSelectedCategories] = useState(availableCategories);
   
   const [page, setPage] = useState(0);
   const [settingsKey, setSettingsKey] = useState(0);
@@ -35,8 +37,9 @@ export default function Home() {
       setIsLoading(true);
       setError("");
       try {
+        const categoriesQuery = selectedCategories.join(',');
         const response = await fetch(
-          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}`,
+          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}`,
         );
         if (!response.ok) throw new Error("Failed to fetch facts");
         const newFacts: Fact[] = await response.json();
@@ -71,11 +74,12 @@ export default function Home() {
   }, [isIntersecting, hasMore, isLoading]);
 
   const handleSettingsChange = useCallback(
-    (newContentLang: string, newTranslationLang: string, newLevel: string, newFontSize: string) => {
+    (newContentLang: string, newTranslationLang: string, newLevel: string, newFontSize: string, newCategories: string[]) => {
       setContentLanguage(newContentLang);
       setTranslationLanguage(newTranslationLang);
       setLevel(newLevel);
       setFontSize(newFontSize);
+      setSelectedCategories(newCategories);
       setFacts([]);
       setPage(0);
       setHasMore(true);

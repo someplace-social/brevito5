@@ -21,6 +21,7 @@ import { Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type OptionsMenuProps = {
   onSettingsChange: (
@@ -28,17 +29,20 @@ type OptionsMenuProps = {
     translationLanguage: string,
     level: string,
     fontSize: string,
+    categories: string[],
   ) => void;
 };
 
 // Map slider numerical values to Tailwind CSS classes
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
+const availableCategories = ["Science", "History", "Geography"];
 
 export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
   const [contentLanguage, setContentLanguage] = useState("Spanish");
   const [translationLanguage, setTranslationLanguage] = useState("English");
   const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-lg"); // Default font size
+  const [fontSize, setFontSize] = useState("text-lg");
+  const [selectedCategories, setSelectedCategories] = useState(availableCategories);
 
   // Effect to load saved settings on mount
   useEffect(() => {
@@ -46,11 +50,16 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     const savedTranslationLang = localStorage.getItem("brevito-translation-language");
     const savedLevel = localStorage.getItem("brevito-level");
     const savedFontSize = localStorage.getItem("brevito-font-size");
+    const savedCategories = localStorage.getItem("brevito-categories");
+
     if (savedContentLang) setContentLanguage(savedContentLang);
     if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
     if (savedLevel) setLevel(savedLevel);
     if (savedFontSize && fontSizes.includes(savedFontSize)) {
       setFontSize(savedFontSize);
+    }
+    if (savedCategories) {
+      setSelectedCategories(JSON.parse(savedCategories));
     }
   }, []);
 
@@ -60,8 +69,9 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
     localStorage.setItem("brevito-translation-language", translationLanguage);
     localStorage.setItem("brevito-level", level);
     localStorage.setItem("brevito-font-size", fontSize);
-    onSettingsChange(contentLanguage, translationLanguage, level, fontSize);
-  }, [contentLanguage, translationLanguage, level, fontSize, onSettingsChange]);
+    localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
+    onSettingsChange(contentLanguage, translationLanguage, level, fontSize, selectedCategories);
+  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, onSettingsChange]);
 
   const currentSizeIndex = fontSizes.indexOf(fontSize);
 
@@ -76,10 +86,32 @@ export function OptionsMenu({ onSettingsChange }: OptionsMenuProps) {
         <SheetHeader>
           <SheetTitle>Options</SheetTitle>
           <SheetDescription>
-            Choose your content and translation languages.
+            Customize your learning experience.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-4">
+          {/* Category Filter */}
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="text-right pt-2">Categories</Label>
+            <ToggleGroup
+              type="multiple"
+              value={selectedCategories}
+              onValueChange={(value) => {
+                // Ensure at least one category is always selected
+                if (value.length > 0) {
+                  setSelectedCategories(value);
+                }
+              }}
+              className="col-span-3 flex-wrap justify-start"
+            >
+              {availableCategories.map((category) => (
+                <ToggleGroupItem key={category} value={category} className="capitalize">
+                  {category}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+
           {/* Language and Level Selectors */}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Content</Label>
