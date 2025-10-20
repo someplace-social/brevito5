@@ -18,9 +18,10 @@ import {
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Settings } from "lucide-react";
+import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Toggle } from "@/components/ui/toggle";
 
 type OptionsMenuProps = {
   contentLanguage: string;
@@ -52,6 +53,21 @@ export function OptionsMenu({
 }: OptionsMenuProps) {
   const currentSizeIndex = fontSizes.indexOf(fontSize);
 
+  const handleCategoryToggle = (category: string) => {
+    const isCurrentlySelected = selectedCategories.includes(category);
+    
+    // If it's the last selected category, do nothing to prevent de-selection
+    if (isCurrentlySelected && selectedCategories.length === 1) {
+      return;
+    }
+
+    const newCategories = isCurrentlySelected
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+      
+    onSelectedCategoriesChange(newCategories);
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -70,22 +86,19 @@ export function OptionsMenu({
           {/* Category Filter */}
           <div className="grid grid-cols-4 items-start gap-4">
             <Label className="text-right pt-2">Categories</Label>
-            <ToggleGroup
-              type="multiple"
-              value={selectedCategories}
-              onValueChange={(value) => {
-                if (value.length > 0) {
-                  onSelectedCategoriesChange(value);
-                }
-              }}
-              className="col-span-3 flex-wrap justify-start"
-            >
+            <div className="col-span-3 flex flex-wrap gap-2">
               {availableCategories.map((category) => (
-                <ToggleGroupItem key={category} value={category} className="capitalize">
+                <Toggle
+                  key={category}
+                  variant="outline"
+                  pressed={selectedCategories.includes(category)}
+                  onPressedChange={() => handleCategoryToggle(category)}
+                  className="capitalize"
+                >
                   {category}
-                </ToggleGroupItem>
+                </Toggle>
               ))}
-            </ToggleGroup>
+            </div>
           </div>
 
           {/* Language and Level Selectors */}
