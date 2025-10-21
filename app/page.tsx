@@ -11,6 +11,7 @@ type Fact = {
   subcategory: string | null;
   source: string | null;
   source_url: string | null;
+  image_url: string | null;
 };
 
 const PAGE_LIMIT = 5;
@@ -27,6 +28,7 @@ export default function Home() {
   const [level, setLevel] = useState("Beginner");
   const [fontSize, setFontSize] = useState("text-lg");
   const [selectedCategories, setSelectedCategories] = useState(availableCategories);
+  const [showImages, setShowImages] = useState(true);
   
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -43,6 +45,7 @@ export default function Home() {
     const savedLevel = localStorage.getItem("brevito-level");
     const savedFontSize = localStorage.getItem("brevito-font-size");
     const savedCategories = localStorage.getItem("brevito-categories");
+    const savedShowImages = localStorage.getItem("brevito-show-images");
 
     if (savedContentLang) setContentLanguage(savedContentLang);
     if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
@@ -54,9 +57,10 @@ export default function Home() {
         if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
           setSelectedCategories(parsedCategories);
         }
-      } catch {
-        // Ignore malformed JSON in localStorage
-      }
+      } catch {}
+    }
+    if (savedShowImages) {
+      setShowImages(JSON.parse(savedShowImages));
     }
     setIsInitialized(true);
   }, []);
@@ -115,13 +119,14 @@ export default function Home() {
     localStorage.setItem("brevito-level", level);
     localStorage.setItem("brevito-font-size", fontSize);
     localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
-  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories]);
+    localStorage.setItem("brevito-show-images", JSON.stringify(showImages));
+  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
 
   useEffect(() => {
     if (!isInitialized) return;
     handleSettingsChange();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories]);
+  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
   
   const handleCategoryFilter = (category: string) => {
     if (category && !selectedCategories.includes(category)) {
@@ -151,6 +156,8 @@ export default function Home() {
               onFontSizeChange={setFontSize}
               selectedCategories={selectedCategories}
               onSelectedCategoriesChange={setSelectedCategories}
+              showImages={showImages}
+              onShowImagesChange={setShowImages}
             />
           </div>
         </div>
@@ -169,6 +176,8 @@ export default function Home() {
               subcategory={fact.subcategory}
               source={fact.source}
               sourceUrl={fact.source_url}
+              imageUrl={fact.image_url}
+              showImages={showImages}
               onCategoryFilter={handleCategoryFilter}
             />
           ))}

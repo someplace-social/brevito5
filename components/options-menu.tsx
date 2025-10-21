@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 
 type OptionsMenuProps = {
   contentLanguage: string;
@@ -34,12 +35,13 @@ type OptionsMenuProps = {
   onFontSizeChange: (value: string) => void;
   selectedCategories: string[];
   onSelectedCategoriesChange: (value: string[]) => void;
+  showImages: boolean;
+  onShowImagesChange: (value: boolean) => void;
 };
 
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 const availableCategories = ["Culture", "Geography", "History", "Human Body", "Miscellaneous", "Science"];
 
-// Helper to compare category arrays
 const categoriesAreEqual = (a: string[], b: string[]) => {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort();
@@ -58,16 +60,16 @@ export function OptionsMenu({
   onFontSizeChange,
   selectedCategories,
   onSelectedCategoriesChange,
+  showImages,
+  onShowImagesChange,
 }: OptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Staged state for deferred updates
   const [stagedContentLanguage, setStagedContentLanguage] = useState(contentLanguage);
   const [stagedTranslationLanguage, setStagedTranslationLanguage] = useState(translationLanguage);
   const [stagedLevel, setStagedLevel] = useState(level);
   const [stagedCategories, setStagedCategories] = useState(selectedCategories);
 
-  // Sync staged state with parent props whenever the sheet is opened
   useEffect(() => {
     if (isOpen) {
       setStagedContentLanguage(contentLanguage);
@@ -78,15 +80,13 @@ export function OptionsMenu({
   }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories]);
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) { // Sheet is closing
-      // Check if any deferred settings have changed
+    if (!open) {
       const hasChanges =
         stagedContentLanguage !== contentLanguage ||
         stagedTranslationLanguage !== translationLanguage ||
         stagedLevel !== level ||
         !categoriesAreEqual(stagedCategories, selectedCategories);
 
-      // If there are changes, call all parent update functions
       if (hasChanges) {
         onContentLanguageChange(stagedContentLanguage);
         onTranslationLanguageChange(stagedTranslationLanguage);
@@ -100,7 +100,7 @@ export function OptionsMenu({
   const handleCategoryToggle = (category: string) => {
     const isCurrentlySelected = stagedCategories.includes(category);
     if (isCurrentlySelected && stagedCategories.length === 1) {
-      return; // Prevent deselecting the last category
+      return;
     }
     const newCategories = isCurrentlySelected
       ? stagedCategories.filter((c) => c !== category)
@@ -182,7 +182,7 @@ export function OptionsMenu({
             </Select>
           </div>
 
-          {/* Font Size Slider (Instant Update) */}
+          {/* Instant Update Options */}
           <div className="grid grid-cols-4 items-center gap-4 pt-2">
             <Label className="text-right">Font Size</Label>
             <div className="col-span-3 flex items-center gap-2">
@@ -196,8 +196,17 @@ export function OptionsMenu({
               <span className="text-xl">A</span>
             </div>
           </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Show Images</Label>
+            <div className="col-span-3">
+              <Switch
+                checked={showImages}
+                onCheckedChange={onShowImagesChange}
+              />
+            </div>
+          </div>
           
-          {/* Theme Switcher (Instant Update) */}
           <ThemeSwitcher />
         </div>
       </SheetContent>

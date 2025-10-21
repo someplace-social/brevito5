@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -10,6 +11,7 @@ import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
 import { Button } from "./ui/button";
 import { WordAnalysisDrawer } from "./word-analysis-drawer";
 import { ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type FactCardProps = {
   factId: string;
@@ -21,15 +23,18 @@ type FactCardProps = {
   subcategory: string | null;
   source: string | null;
   sourceUrl: string | null;
+  imageUrl: string | null;
+  showImages: boolean;
   onCategoryFilter: (category: string) => void;
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, source, sourceUrl, onCategoryFilter }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, source, sourceUrl, imageUrl, showImages, onCategoryFilter }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -161,17 +166,33 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     return sizes[currentIndex + 1];
   };
 
-  const isLoading = !content && !error;
+  const isLoadingContent = !content && !error;
   const isSingleWord = selectedText && !selectedText.includes(" ");
   const translationFontSize = getTranslationFontSize(fontSize);
 
   return (
     <div ref={ref}>
-      <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col">
+      <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col overflow-hidden">
+        {showImages && imageUrl && (
+          <div className="relative w-full aspect-[16/9] bg-muted">
+            {isImageLoading && <Skeleton className="w-full h-full" />}
+            <Image
+              src={imageUrl}
+              alt={content || category || 'Fact image'}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={cn(
+                "object-cover transition-opacity duration-300",
+                isImageLoading ? "opacity-0" : "opacity-100"
+              )}
+              onLoad={() => setIsImageLoading(false)}
+            />
+          </div>
+        )}
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
           <PopoverAnchor style={{ position: 'absolute', top: selectionRect?.y, left: selectionRect?.x, width: selectionRect?.width, height: selectionRect?.height }} />
           <CardContent className="p-6 flex-grow">
-            {isLoading ? (
+            {isLoadingContent ? (
               <div className="space-y-2">
                 <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-4 w-full max-w-[300px]" />
