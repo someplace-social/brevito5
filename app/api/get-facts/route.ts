@@ -9,38 +9,21 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "5");
   const categoriesParam = searchParams.get("categories");
   const language = searchParams.get("language");
-  const start = page * limit;
-  const end = start + limit - 1;
+  const offset = page * limit;
+
+  const categories = categoriesParam ? categoriesParam.split(',') : null;
 
   const supabase = await createClient();
-  
-  // The 'fact_translations!inner(language)' part creates an inner join.
-  // This ensures we only select 'og_facts' that have a matching translation.
-  let query = supabase
-    .from("og_facts")
-    .select("id, category, subcategory, fact_translations!inner(language)");
 
-  // Filter by the selected language from the frontend
-  if (language) {
-    query = query.eq("fact_translations.language", language);
-  }
-
-  // Filter by the selected categories
-  if (categoriesParam) {
-    const categories = categoriesParam.split(',');
-    if (categories.length > 0) {
-      query = query.in('category', categories);
-    }
-  }
-
-  // Apply ordering and pagination
-  query = query
-    .order("created_at", { ascending: false })
-    .range(start, end);
-
-  const { data: facts, error } = await query;
+  const { data: facts, error } = await supabase.rpc('get_random_facts', {
+    p_categories: categories,
+    p_language: language,
+    p_limit: limit,
+    p_offset: offset,
+  });
 
   if (error) {
+    console.error("Error calling get_random_facts RPC:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

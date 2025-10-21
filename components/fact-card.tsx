@@ -9,6 +9,7 @@ import type { TranslationData } from "@/app/api/translate-word/route";
 import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
 import { Button } from "./ui/button";
 import { WordAnalysisDrawer } from "./word-analysis-drawer";
+import { ArrowUpRight } from "lucide-react";
 
 type FactCardProps = {
   factId: string;
@@ -18,9 +19,12 @@ type FactCardProps = {
   fontSize: string;
   category: string | null;
   subcategory: string | null;
+  source: string | null;
+  sourceUrl: string | null;
+  onCategoryFilter: (category: string) => void;
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, source, sourceUrl, onCategoryFilter }: FactCardProps) {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -66,6 +70,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
         if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
+          if (popoverOpen) setPopoverOpen(false);
           return;
         }
         const text = selection.toString().trim();
@@ -75,10 +80,12 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           const cardBounds = cardRef.current.getBoundingClientRect();
           setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
           if (text !== selectedText) {
+            setSelectedText(text);
             setAnalysis(null);
           }
-          setSelectedText(text);
           setPopoverOpen(true);
+        } else {
+          setPopoverOpen(false);
         }
       }, 300);
     };
@@ -87,7 +94,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       document.removeEventListener("selectionchange", handleSelectionChange);
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [selectedText]);
+  }, [popoverOpen, selectedText]);
 
   useEffect(() => {
     if (!selectedText || !popoverOpen) {
@@ -145,13 +152,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
-  const handleOpenChange = (isOpen: boolean) => {
-    setPopoverOpen(isOpen);
-    if (!isOpen) {
-      setSelectedText("");
-    }
-  };
-
   const getTranslationFontSize = (baseSize: string) => {
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
     const currentIndex = sizes.indexOf(baseSize);
@@ -167,10 +167,10 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
 
   return (
     <div ref={ref}>
-      <Card ref={cardRef} className="w-full min-h-[100px] relative">
-        <Popover open={popoverOpen} onOpenChange={handleOpenChange}>
+      <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col">
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
           <PopoverAnchor style={{ position: 'absolute', top: selectionRect?.y, left: selectionRect?.x, width: selectionRect?.width, height: selectionRect?.height }} />
-          <CardContent className="p-6">
+          <CardContent className="p-6 flex-grow">
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-4 w-1/4" />
@@ -181,11 +181,15 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
               <p className="text-destructive">{error}</p>
             ) : (
               <>
-                {category && subcategory && (
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {category} &gt; {subcategory}
-                    </p>
+                {category && (
+                  <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <button onClick={() => onCategoryFilter(category)} className="hover:text-foreground transition-colors">{category}</button>
+                    {subcategory && (
+                      <>
+                        <span> &gt; </span>
+                        <button onClick={() => onCategoryFilter(category)} className="hover:text-foreground transition-colors">{subcategory}</button>
+                      </>
+                    )}
                   </div>
                 )}
                 <p 
@@ -197,6 +201,16 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
               </>
             )}
           </CardContent>
+
+          {source && sourceUrl && (
+            <div className="px-6 pb-4 text-xs text-muted-foreground">
+              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                Source: {source}
+                <ArrowUpRight className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+
           <PopoverContent 
             className="w-fit max-w-sm p-0 translate-z-0 bg-background text-foreground" 
             side="top" 

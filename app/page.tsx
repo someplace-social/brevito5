@@ -9,6 +9,8 @@ type Fact = {
   id: string;
   category: string | null;
   subcategory: string | null;
+  source: string | null;
+  source_url: string | null;
 };
 
 const PAGE_LIMIT = 5;
@@ -30,13 +32,11 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   
-  // New state to control initialization and resets
   const [isInitialized, setIsInitialized] = useState(false);
   const [settingsKey, setSettingsKey] = useState(0);
 
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
-  // Effect 1: Load settings from localStorage ONLY ONCE on initial mount
   useEffect(() => {
     const savedContentLang = localStorage.getItem("brevito-content-language");
     const savedTranslationLang = localStorage.getItem("brevito-translation-language");
@@ -58,15 +58,10 @@ export default function Home() {
         // Ignore malformed JSON in localStorage
       }
     }
-
-    // Mark initialization as complete to allow data fetching
     setIsInitialized(true);
   }, []);
 
-  // Effect 2: Main data fetching logic.
-  // Runs when initialized, when page changes, or when settingsKey changes.
   useEffect(() => {
-    // Don't fetch until settings are loaded from localStorage
     if (!isInitialized) return;
 
     const fetchData = async () => {
@@ -85,7 +80,6 @@ export default function Home() {
         }
 
         setFacts((prevFacts) => {
-          // If it's the first page, replace facts. Otherwise, append.
           const combinedFacts = page === 0 ? newFacts : [...prevFacts, ...newFacts];
           const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
           return Array.from(uniqueFactsMap.values());
@@ -104,14 +98,12 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, settingsKey, isInitialized]);
 
-  // Effect 3: Infinite scroll trigger
   useEffect(() => {
     if (isIntersecting && hasMore && !isLoading) {
       setPage((prevPage) => prevPage + 1);
     }
   }, [isIntersecting, hasMore, isLoading]);
 
-  // Callback for when any setting is changed in the OptionsMenu
   const handleSettingsChange = useCallback(() => {
     setFacts([]);
     setPage(0);
@@ -125,12 +117,17 @@ export default function Home() {
     localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories]);
 
-  // Effect to trigger a reset ONLY when a setting actually changes
   useEffect(() => {
     if (!isInitialized) return;
     handleSettingsChange();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories]);
+  
+  const handleCategoryFilter = (category: string) => {
+    if (category && !selectedCategories.includes(category)) {
+      setSelectedCategories([category]);
+    }
+  };
 
   return (
     <main className="flex flex-col items-center min-h-screen">
@@ -170,6 +167,9 @@ export default function Home() {
               fontSize={fontSize}
               category={fact.category}
               subcategory={fact.subcategory}
+              source={fact.source}
+              sourceUrl={fact.source_url}
+              onCategoryFilter={handleCategoryFilter}
             />
           ))}
 
