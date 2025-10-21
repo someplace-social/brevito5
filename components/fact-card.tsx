@@ -194,7 +194,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             )}
           </CardContent>
           <PopoverContent 
-            className="w-fit max-w-sm p-0 translate-z-0 bg-accent text-accent-foreground" 
+            className="w-fit max-w-sm p-0 translate-z-0 bg-background text-foreground" 
             side="top" 
             align="center"
           >
@@ -204,7 +204,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
               <div className="flex flex-col">
                 <p className={`font-semibold px-3 py-2 break-words ${translationFontSize}`}>{translation.primaryTranslation}</p>
                 {isSingleWord && (
-                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t border-accent-foreground/20" onClick={handleLearnMore}>
+                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t border-foreground/10" onClick={handleLearnMore}>
                     Learn More
                   </Button>
                 )}
