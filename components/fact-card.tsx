@@ -25,7 +25,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -61,34 +60,59 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   }, [factId, isIntersecting, contentLanguage, level]);
 
   useEffect(() => {
-    const handleSelectionChange = () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(() => {
+    const handleSelection = () => {
+      // Use a small timeout to allow the selection to finalize, especially on mobile/touch devices
+      setTimeout(() => {
         const selection = window.getSelection();
-        if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-          if (popoverOpen) setPopoverOpen(false);
+        if (!selection || selection.rangeCount === 0 || !cardRef.current) {
           return;
         }
+
+        const range = selection.getRangeAt(0);
+        const selectedNode = range.commonAncestorContainer;
         const text = selection.toString().trim();
-        if (text && text.length > 0) {
-          const range = selection.getRangeAt(0);
+
+        // If the selection is empty, and the popover is open, close it.
+        // This handles clicks that clear a selection.
+        if (text.length === 0) {
+          if (popoverOpen) {
+            setPopoverOpen(false);
+          }
+          return;
+        }
+
+        // Only proceed if the selection is inside the current card component
+        if (cardRef.current.contains(selectedNode)) {
           const rect = range.getBoundingClientRect();
           const cardBounds = cardRef.current.getBoundingClientRect();
-          setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
+
+          setSelectionRect(new DOMRect(
+            rect.left - cardBounds.left,
+            rect.top - cardBounds.top,
+            rect.width,
+            rect.height
+          ));
+
           if (text !== selectedText) {
             setSelectedText(text);
             setAnalysis(null);
           }
           setPopoverOpen(true);
         } else {
-          setPopoverOpen(false);
+          // If the selection is outside this card, close this card's popover.
+          if (popoverOpen) {
+            setPopoverOpen(false);
+          }
         }
-      }, 300);
+      }, 10);
     };
-    document.addEventListener("selectionchange", handleSelectionChange);
+
+    document.addEventListener("mouseup", handleSelection);
+    document.addEventListener("touchend", handleSelection);
+
     return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      document.removeEventListener("mouseup", handleSelection);
+      document.removeEventListener("touchend", handleSelection);
     };
   }, [popoverOpen, selectedText]);
 
@@ -184,7 +208,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             )}
           </CardContent>
           <PopoverContent 
-            className="w-auto p-0 translate-z-0" 
+            className="w-auto max-w-[90vw] sm:max-w-sm p-0 translate-z-0" 
             side="top" 
             align="center"
           >
@@ -192,7 +216,9 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
             {translation && (
               <div className="flex flex-col">
-                <p className="font-semibold text-lg px-3 py-2">{translation.primaryTranslation}</p>
+                <p className="font-semibold text-lg px-3 py-2 whitespace-normal break-words">
+                  {translation.primaryTranslation}
+                </p>
                 {isSingleWord && (
                   <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t" onClick={handleLearnMore}>
                     Learn More
