@@ -129,7 +129,11 @@ export default function Home() {
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
   
   const handleCategoryFilter = (category: string) => {
-    if (category && !selectedCategories.includes(category)) {
+    // Check if the feed is already filtered to only this one category.
+    const isAlreadyFiltered = selectedCategories.length === 1 && selectedCategories[0] === category;
+    
+    // If it's not already filtered, update the state to filter by this category.
+    if (category && !isAlreadyFiltered) {
       setSelectedCategories([category]);
     }
   };
