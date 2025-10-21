@@ -25,6 +25,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [error, setError] = useState<string | null>(null);
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -51,7 +52,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           if (!response.ok) throw new Error("Failed to fetch fact content");
           const data = await response.json();
           setContent(data.content);
-        } catch (err) {
+        } catch (err) => {
           setError(err instanceof Error ? err.message : "Could not load content.");
         }
       };
@@ -60,59 +61,34 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   }, [factId, isIntersecting, contentLanguage, level]);
 
   useEffect(() => {
-    const handleSelection = () => {
-      // Use a small timeout to allow the selection to finalize, especially on mobile/touch devices
-      setTimeout(() => {
+    const handleSelectionChange = () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0 || !cardRef.current) {
+        if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
+          if (popoverOpen) setPopoverOpen(false);
           return;
         }
-
-        const range = selection.getRangeAt(0);
-        const selectedNode = range.commonAncestorContainer;
         const text = selection.toString().trim();
-
-        // If the selection is empty, and the popover is open, close it.
-        // This handles clicks that clear a selection.
-        if (text.length === 0) {
-          if (popoverOpen) {
-            setPopoverOpen(false);
-          }
-          return;
-        }
-
-        // Only proceed if the selection is inside the current card component
-        if (cardRef.current.contains(selectedNode)) {
+        if (text && text.length > 0) {
+          const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
           const cardBounds = cardRef.current.getBoundingClientRect();
-
-          setSelectionRect(new DOMRect(
-            rect.left - cardBounds.left,
-            rect.top - cardBounds.top,
-            rect.width,
-            rect.height
-          ));
-
+          setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
           if (text !== selectedText) {
             setSelectedText(text);
             setAnalysis(null);
           }
           setPopoverOpen(true);
         } else {
-          // If the selection is outside this card, close this card's popover.
-          if (popoverOpen) {
-            setPopoverOpen(false);
-          }
+          setPopoverOpen(false);
         }
-      }, 10);
+      }, 300);
     };
-
-    document.addEventListener("mouseup", handleSelection);
-    document.addEventListener("touchend", handleSelection);
-
+    document.addEventListener("selectionchange", handleSelectionChange);
     return () => {
-      document.removeEventListener("mouseup", handleSelection);
-      document.removeEventListener("touchend", handleSelection);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, [popoverOpen, selectedText]);
 
@@ -172,8 +148,18 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
+  const getTranslationFontSize = (baseSize: string) => {
+    const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
+    const currentIndex = sizes.indexOf(baseSize);
+    if (currentIndex === -1 || currentIndex >= sizes.length - 1) {
+      return "text-3xl";
+    }
+    return sizes[currentIndex + 1];
+  };
+
   const isLoading = !content && !error;
   const isSingleWord = selectedText && !selectedText.includes(" ");
+  const translationFontSize = getTranslationFontSize(fontSize);
 
   return (
     <div ref={ref}>
@@ -208,7 +194,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             )}
           </CardContent>
           <PopoverContent 
-            className="w-auto max-w-[90vw] sm:max-w-sm p-0 translate-z-0" 
+            className="w-fit max-w-sm p-0 translate-z-0 bg-accent text-accent-foreground" 
             side="top" 
             align="center"
           >
@@ -216,11 +202,9 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
             {translation && (
               <div className="flex flex-col">
-                <p className="font-semibold text-lg px-3 py-2 whitespace-normal break-words">
-                  {translation.primaryTranslation}
-                </p>
+                <p className={`font-semibold px-3 py-2 break-words ${translationFontSize}`}>{translation.primaryTranslation}</p>
                 {isSingleWord && (
-                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t" onClick={handleLearnMore}>
+                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t border-accent-foreground/20" onClick={handleLearnMore}>
                     Learn More
                   </Button>
                 )}
