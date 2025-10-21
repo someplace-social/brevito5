@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Brevito",
   description: "Learn languages with fun facts.",
-  manifest: "/manifest.json",
+  manifest: "/manifest.json?v=2", // <-- THIS IS THE CRITICAL CHANGE
 };
 
 const lexend = Lexend({
@@ -36,4 +36,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-} 
+}
