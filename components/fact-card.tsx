@@ -52,7 +52,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           if (!response.ok) throw new Error("Failed to fetch fact content");
           const data = await response.json();
           setContent(data.content);
-        } catch (err) => {
+        } catch (err) {
           setError(err instanceof Error ? err.message : "Could not load content.");
         }
       };
