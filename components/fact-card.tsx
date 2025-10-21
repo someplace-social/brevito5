@@ -66,7 +66,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
         if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-          if (popoverOpen) setPopoverOpen(false);
           return;
         }
         const text = selection.toString().trim();
@@ -76,13 +75,10 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           const cardBounds = cardRef.current.getBoundingClientRect();
           setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
           if (text !== selectedText) {
-            setSelectedText(text);
             setAnalysis(null);
           }
+          setSelectedText(text);
           setPopoverOpen(true);
-        } else {
-          setPopoverOpen(false);
-          setSelectedText("");
         }
       }, 300);
     };
@@ -91,7 +87,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       document.removeEventListener("selectionchange", handleSelectionChange);
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [popoverOpen, selectedText]);
+  }, [selectedText]);
 
   useEffect(() => {
     if (!selectedText || !popoverOpen) {
@@ -149,6 +145,13 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setPopoverOpen(isOpen);
+    if (!isOpen) {
+      setSelectedText("");
+    }
+  };
+
   const getTranslationFontSize = (baseSize: string) => {
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
     const currentIndex = sizes.indexOf(baseSize);
@@ -165,7 +168,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   return (
     <div ref={ref}>
       <Card ref={cardRef} className="w-full min-h-[100px] relative">
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <Popover open={popoverOpen} onOpenChange={handleOpenChange}>
           <PopoverAnchor style={{ position: 'absolute', top: selectionRect?.y, left: selectionRect?.x, width: selectionRect?.width, height: selectionRect?.height }} />
           <CardContent className="p-6">
             {isLoading ? (
