@@ -82,6 +82,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           setPopoverOpen(true);
         } else {
           setPopoverOpen(false);
+          setSelectedText("");
         }
       }, 300);
     };
