@@ -187,7 +187,7 @@ export function ExtendedFactSheet({
                         {data.subcategory && <span> &gt; {data.subcategory}</span>}
                       </div>
                     )}
-                    <p className={`leading-relaxed ${fontSize}`} onContextMenu={(e) => e.preventDefault()}>{data.content}</p>
+                    <p className={`leading-relaxed ${fontSize} [-webkit-touch-callout:none]`} onContextMenu={(e) => e.preventDefault()}>{data.content}</p>
                     {data.source && data.source_url && (
                       <div className="text-sm text-muted-foreground pt-4 border-t">
                         <a href={data.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
