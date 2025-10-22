@@ -82,8 +82,6 @@ export default function Home() {
               fontSize={fontSize}
               category={fact.category}
               subcategory={fact.subcategory}
-              source={fact.source}
-              sourceUrl={fact.source_url}
               imageUrl={fact.image_url}
               showImages={showImages}
               onCategoryFilter={handleCategoryFilter}

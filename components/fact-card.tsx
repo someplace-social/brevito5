@@ -24,14 +24,12 @@ type FactCardProps = {
   fontSize: string;
   category: string | null;
   subcategory: string | null;
-  source: string | null;
-  sourceUrl: string | null;
   imageUrl: string | null;
   showImages: boolean;
   onCategoryFilter: (category: string) => void;
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, source, sourceUrl, imageUrl, showImages, onCategoryFilter }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, imageUrl, showImages, onCategoryFilter }: FactCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { ref: intersectionRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const [isImageLoading, setIsImageLoading] = useState(true);
