@@ -18,8 +18,6 @@ export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: 
       if (pressed) {
         return [...currentCategories, category];
       } else {
-        // Prevent deselecting the last item
-        if (currentCategories.length === 1) return currentCategories;
         return currentCategories.filter((c) => c !== category);
       }
     });
@@ -40,6 +38,7 @@ export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: 
             key={category}
             variant="outline"
             pressed={stagedCategories.includes(category)}
+            disabled={stagedCategories.length === 1 && stagedCategories.includes(category)}
             onPressedChange={(pressed) => handleCategoryToggle(category, pressed)}
             className={cn("capitalize", fontSize)}
           >

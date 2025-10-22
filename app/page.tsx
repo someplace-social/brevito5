@@ -63,7 +63,7 @@ export default function Home() {
           </div>
           <div className="absolute top-1/2 right-0 -translate-y-1/2">
             <OptionsMenu 
-              triggerIcon={<Menu />}
+              triggerIcon={<Menu className="h-8 w-8" />}
               contentLanguage={contentLanguage}
               onContentLanguageChange={setContentLanguage}
               translationLanguage={translationLanguage}
