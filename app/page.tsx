@@ -117,6 +117,7 @@ export default function Home() {
         isOpen={!!extendedFactId}
         onOpenChange={handleOpenChange}
         language={contentLanguage}
+        translationLanguage={translationLanguage}
         level={level}
         fontSize={fontSize}
         showImages={showImages}
