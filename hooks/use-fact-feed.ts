@@ -79,4 +79,4 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
   };
 
   return { facts, error, isLoading, hasMore, loadMore };
-}
+} 
