@@ -7,6 +7,7 @@ import { useAppSettings } from "@/hooks/use-app-settings";
 import { useFactFeed } from "@/hooks/use-fact-feed";
 import { useEffect, useState } from "react";
 import { ExtendedFactSheet } from "@/components/extended-fact-sheet";
+import { Menu } from "lucide-react";
 
 export default function Home() {
   const {
@@ -62,6 +63,7 @@ export default function Home() {
           </div>
           <div className="absolute top-1/2 right-0 -translate-y-1/2">
             <OptionsMenu 
+              triggerIcon={<Menu />}
               contentLanguage={contentLanguage}
               onContentLanguageChange={setContentLanguage}
               translationLanguage={translationLanguage}

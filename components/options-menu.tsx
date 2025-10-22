@@ -3,7 +3,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -17,14 +16,15 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ChevronRight, Languages, LayoutGrid, Palette } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
 
 type OptionsMenuProps = {
+  triggerIcon: ReactNode;
   contentLanguage: string;
   onContentLanguageChange: (value: string) => void;
   translationLanguage: string;
@@ -49,7 +49,10 @@ const categoriesAreEqual = (a: string[], b: string[]) => {
   return sortedA.every((val, index) => val === sortedB[index]);
 };
 
+type View = "main" | "topics" | "language" | "appearance";
+
 export function OptionsMenu({
+  triggerIcon,
   contentLanguage,
   onContentLanguageChange,
   translationLanguage,
@@ -64,6 +67,7 @@ export function OptionsMenu({
   onShowImagesChange,
 }: OptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeView, setActiveView] = useState<View>("main");
 
   const [stagedContentLanguage, setStagedContentLanguage] = useState(contentLanguage);
   const [stagedTranslationLanguage, setStagedTranslationLanguage] = useState(translationLanguage);
@@ -93,121 +97,149 @@ export function OptionsMenu({
         onLevelChange(stagedLevel);
         onSelectedCategoriesChange(stagedCategories);
       }
+    } else {
+      setActiveView("main");
     }
     setIsOpen(open);
   };
 
   const handleCategoryToggle = (category: string) => {
     const isCurrentlySelected = stagedCategories.includes(category);
-    if (isCurrentlySelected && stagedCategories.length === 1) {
-      return;
-    }
+    if (isCurrentlySelected && stagedCategories.length === 1) return;
     const newCategories = isCurrentlySelected
       ? stagedCategories.filter((c) => c !== category)
       : [...stagedCategories, category];
     setStagedCategories(newCategories);
   };
-
+  
   const currentSizeIndex = fontSizes.indexOf(fontSize);
+
+  const viewTitles: Record<View, string> = {
+    main: "Settings",
+    topics: "Topics",
+    language: "Language",
+    appearance: "Appearance",
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Settings />
+          {triggerIcon}
         </Button>
       </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Options</SheetTitle>
-          <SheetDescription>
-            Customize your feed.
-          </SheetDescription>
+      <SheetContent side="left" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
+        <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0 flex-row items-center gap-2">
+          {activeView !== "main" && (
+            <Button variant="ghost" size="icon" onClick={() => setActiveView("main")}>
+              <ArrowLeft />
+            </Button>
+          )}
+          <SheetTitle className="text-xl">{viewTitles[activeView]}</SheetTitle>
         </SheetHeader>
-        <div className="grid gap-6 py-4">
-          {/* Category Filter */}
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right pt-2">Categories</Label>
-            <div className="col-span-3 flex flex-wrap gap-2">
-              {availableCategories.map((category) => (
-                <Toggle
-                  key={category}
-                  variant="outline"
-                  pressed={stagedCategories.includes(category)}
-                  onPressedChange={() => handleCategoryToggle(category)}
-                  className="capitalize"
-                >
-                  {category}
-                </Toggle>
-              ))}
-            </div>
-          </div>
 
-          {/* Language and Level Selectors */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Content</Label>
-            <Select value={stagedContentLanguage} onValueChange={setStagedContentLanguage}>
-              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="English">English</SelectItem>
-                <SelectItem value="Spanish">Spanish</SelectItem>
-                <SelectItem value="French">French</SelectItem>
-                <SelectItem value="German">German</SelectItem>
-                <SelectItem value="Italian">Italian</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Translate To</Label>
-            <Select value={stagedTranslationLanguage} onValueChange={setStagedTranslationLanguage}>
-              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="English">English</SelectItem>
-                <SelectItem value="Spanish">Spanish</SelectItem>
-                <SelectItem value="French">French</SelectItem>
-                <SelectItem value="German">German</SelectItem>
-                <SelectItem value="Italian">Italian</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Level</Label>
-            <Select value={stagedLevel} onValueChange={setStagedLevel}>
-              <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Beginner">Beginner</SelectItem>
-                <SelectItem value="Intermediate">Intermediate</SelectItem>
-                <SelectItem value="Advanced">Advanced</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          {activeView === "main" && (
+            <nav className="flex flex-col gap-2">
+              <button onClick={() => setActiveView("topics")} className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-4">
+                  <LayoutGrid className="text-muted-foreground" />
+                  <span className="text-lg">Topics</span>
+                </div>
+                <ChevronRight className="text-muted-foreground" />
+              </button>
+              <button onClick={() => setActiveView("language")} className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-4">
+                  <Languages className="text-muted-foreground" />
+                  <span className="text-lg">Language</span>
+                </div>
+                <ChevronRight className="text-muted-foreground" />
+              </button>
+              <button onClick={() => setActiveView("appearance")} className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-4">
+                  <Palette className="text-muted-foreground" />
+                  <span className="text-lg">Appearance</span>
+                </div>
+                <ChevronRight className="text-muted-foreground" />
+              </button>
+            </nav>
+          )}
 
-          {/* Instant Update Options */}
-          <div className="grid grid-cols-4 items-center gap-4 pt-2">
-            <Label className="text-right">Font Size</Label>
-            <div className="col-span-3 flex items-center gap-2">
-              <span className="text-sm">A</span>
-              <Slider
-                value={[currentSizeIndex]}
-                onValueChange={(value) => onFontSizeChange(fontSizes[value[0]])}
-                max={fontSizes.length - 1}
-                step={1}
-              />
-              <span className="text-xl">A</span>
+          {activeView === "topics" && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((category) => (
+                  <Toggle key={category} variant="outline" pressed={stagedCategories.includes(category)} onPressedChange={() => handleCategoryToggle(category)} className="capitalize">
+                    {category}
+                  </Toggle>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-4 border-t">
+                  <Button variant="secondary" onClick={() => setStagedCategories(availableCategories)} className="flex-1">Select All</Button>
+                  <Button variant="secondary" onClick={() => setStagedCategories([availableCategories[0]])} className="flex-1">Deselect All</Button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Show Images</Label>
-            <div className="col-span-3">
-              <Switch
-                checked={showImages}
-                onCheckedChange={onShowImagesChange}
-              />
+          {activeView === "language" && (
+            <div className="grid gap-6">
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label>Content</Label>
+                <Select value={stagedContentLanguage} onValueChange={setStagedContentLanguage}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                    <SelectItem value="Italian">Italian</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label>Translate To</Label>
+                <Select value={stagedTranslationLanguage} onValueChange={setStagedTranslationLanguage}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                    <SelectItem value="Italian">Italian</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label>Level</Label>
+                <Select value={stagedLevel} onValueChange={setStagedLevel}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Beginner">Beginner</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          
-          <ThemeSwitcher />
+          )}
+
+          {activeView === "appearance" && (
+            <div className="grid gap-6">
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label>Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">A</span>
+                  <Slider value={[currentSizeIndex]} onValueChange={(value) => onFontSizeChange(fontSizes[value[0]])} max={fontSizes.length - 1} step={1} />
+                  <span className="text-xl">A</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Show Images</Label>
+                <Switch checked={showImages} onCheckedChange={onShowImagesChange} />
+              </div>
+              <ThemeSwitcher />
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
