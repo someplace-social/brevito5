@@ -118,7 +118,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             ) : (
               <>
                 {category && (
-                  <div className={cn("mb-4 font-semibold uppercase tracking-wider text-muted-foreground", fontSize)}>
+                  <div className={cn("mb-4 font-heading font-semibold uppercase tracking-wider text-muted-foreground", fontSize)}>
                     <button onClick={() => onCategoryFilter(category)} className="hover:text-foreground transition-colors">{category}</button>
                     {subcategory && (
                       <>

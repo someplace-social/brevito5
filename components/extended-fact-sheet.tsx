@@ -182,7 +182,7 @@ export function ExtendedFactSheet({
                       </div>
                     )}
                     {data.category && (
-                      <div className={cn("font-semibold uppercase tracking-wider text-muted-foreground", fontSize)}>
+                      <div className={cn("font-heading font-semibold uppercase tracking-wider text-muted-foreground", fontSize)}>
                         {data.category}
                         {data.subcategory && <span> &gt; {data.subcategory}</span>}
                       </div>
