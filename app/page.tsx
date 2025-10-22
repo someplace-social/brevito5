@@ -3,6 +3,7 @@
 import { FactCard } from "@/components/fact-card";
 import { OptionsMenu } from "@/components/options-menu";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { useAppSettings } from "@/hooks/use-app-settings";
 import { useEffect, useState, useCallback } from "react";
 
 type Fact = {
@@ -15,92 +16,72 @@ type Fact = {
 };
 
 const PAGE_LIMIT = 5;
-const availableCategories = ["Science", "Technology", "Health", "History", "Business", "Society", "Art", "Sports", "Environment", "Culture", "Food", "Geography", "Psychology", "Animals", "Space", "Language", "Unusual"];
-const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 
 export default function Home() {
+  const {
+    isInitialized,
+    settingsKey,
+    contentLanguage, setContentLanguage,
+    translationLanguage, setTranslationLanguage,
+    level, setLevel,
+    fontSize, setFontSize,
+    selectedCategories, setSelectedCategories,
+    showImages, setShowImages,
+  } = useAppSettings();
+
   const [facts, setFacts] = useState<Fact[]>([]);
   const [error, setError] = useState("");
-  
-  // All settings state is managed here
-  const [contentLanguage, setContentLanguage] = useState("Spanish");
-  const [translationLanguage, setTranslationLanguage] = useState("English");
-  const [level, setLevel] = useState("Beginner");
-  const [fontSize, setFontSize] = useState("text-lg");
-  const [selectedCategories, setSelectedCategories] = useState(availableCategories);
-  const [showImages, setShowImages] = useState(true);
-  
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [settingsKey, setSettingsKey] = useState(0);
 
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
 
-  useEffect(() => {
-    const savedContentLang = localStorage.getItem("brevito-content-language");
-    const savedTranslationLang = localStorage.getItem("brevito-translation-language");
-    const savedLevel = localStorage.getItem("brevito-level");
-    const savedFontSize = localStorage.getItem("brevito-font-size");
-    const savedCategories = localStorage.getItem("brevito-categories");
-    const savedShowImages = localStorage.getItem("brevito-show-images");
-
-    if (savedContentLang) setContentLanguage(savedContentLang);
-    if (savedTranslationLang) setTranslationLanguage(savedTranslationLang);
-    if (savedLevel) setLevel(savedLevel);
-    if (savedFontSize && fontSizes.includes(savedFontSize)) setFontSize(savedFontSize);
-    if (savedCategories) {
-      try {
-        const parsedCategories = JSON.parse(savedCategories);
-        if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
-          setSelectedCategories(parsedCategories);
-        }
-      } catch {}
-    }
-    if (savedShowImages) {
-      setShowImages(JSON.parse(savedShowImages));
-    }
-    setIsInitialized(true);
-  }, []);
-
+  // Reset feed when settings change
   useEffect(() => {
     if (!isInitialized) return;
+    setFacts([]);
+    setPage(0);
+    setHasMore(true);
+  }, [settingsKey, isInitialized]);
 
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const categoriesQuery = selectedCategories.join(',');
-        const response = await fetch(
-          `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch facts");
-        const newFacts: Fact[] = await response.json();
+  const fetchFacts = useCallback(async () => {
+    if (!hasMore) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      const categoriesQuery = selectedCategories.join(',');
+      const response = await fetch(
+        `/api/get-facts?page=${page}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch facts");
+      const newFacts: Fact[] = await response.json();
 
-        if (newFacts.length < PAGE_LIMIT) {
-          setHasMore(false);
-        }
-
-        setFacts((prevFacts) => {
-          const combinedFacts = page === 0 ? newFacts : [...prevFacts, ...newFacts];
-          const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
-          return Array.from(uniqueFactsMap.values());
-        });
-
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred",
-        );
-      } finally {
-        setIsLoading(false);
+      if (newFacts.length < PAGE_LIMIT) {
+        setHasMore(false);
       }
-    };
 
-    fetchData();
+      setFacts((prevFacts) => {
+        const combinedFacts = [...prevFacts, ...newFacts];
+        const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
+        return Array.from(uniqueFactsMap.values());
+      });
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, selectedCategories, contentLanguage, hasMore]);
+
+
+  useEffect(() => {
+    if (isInitialized) {
+      fetchFacts();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, settingsKey, isInitialized]);
+
 
   useEffect(() => {
     if (isIntersecting && hasMore && !isLoading) {
@@ -108,26 +89,6 @@ export default function Home() {
     }
   }, [isIntersecting, hasMore, isLoading]);
 
-  const handleSettingsChange = useCallback(() => {
-    setFacts([]);
-    setPage(0);
-    setHasMore(true);
-    setSettingsKey(prevKey => prevKey + 1);
-
-    localStorage.setItem("brevito-content-language", contentLanguage);
-    localStorage.setItem("brevito-translation-language", translationLanguage);
-    localStorage.setItem("brevito-level", level);
-    localStorage.setItem("brevito-font-size", fontSize);
-    localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
-    localStorage.setItem("brevito-show-images", JSON.stringify(showImages));
-  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
-
-  useEffect(() => {
-    if (!isInitialized) return;
-    handleSettingsChange();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
-  
   const handleCategoryFilter = (category: string) => {
     const isAlreadyFiltered = selectedCategories.length === 1 && selectedCategories[0] === category;
     
@@ -199,4 +160,4 @@ export default function Home() {
       </div>
     </main>
   );
-} 
+}
