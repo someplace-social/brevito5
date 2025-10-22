@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -11,6 +11,8 @@ import { WordAnalysisDrawer } from "./word-analysis-drawer";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TranslationPopoverContent } from "./translation-popover-content";
+import { useFactContent } from "@/hooks/use-fact-content";
+import { useTextSelection } from "@/hooks/use-text-selection";
 
 type FactCardProps = {
   factId: string;
@@ -28,74 +30,18 @@ type FactCardProps = {
 };
 
 export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, source, sourceUrl, imageUrl, showImages, onCategoryFilter }: FactCardProps) {
-  const [content, setContent] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const cardRef = useRef<HTMLDivElement>(null);
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const { ref: intersectionRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const [isImageLoading, setIsImageLoading] = useState(true);
 
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedText, setSelectedText] = useState("");
-  const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+  const { content, error: contentError, isLoading: isLoadingContent } = useFactContent({ factId, language: contentLanguage, level, isIntersecting });
+  const { popoverOpen, setPopoverOpen, selectedText, selectionRect } = useTextSelection(cardRef);
   
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [primaryTranslation, setPrimaryTranslation] = useState("");
-
-  useEffect(() => {
-    if (isIntersecting) {
-      const fetchContent = async () => {
-        try {
-          const response = await fetch("/api/get-fact-content", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ factId, language: contentLanguage, level }),
-          });
-          if (!response.ok) throw new Error("Failed to fetch fact content");
-          const data = await response.json();
-          setContent(data.content);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Could not load content.");
-        }
-      };
-      fetchContent();
-    }
-  }, [factId, isIntersecting, contentLanguage, level]);
-
-  useEffect(() => {
-    const handleSelectionChange = () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(() => {
-        const selection = window.getSelection();
-        if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-          if (popoverOpen) setPopoverOpen(false);
-          return;
-        }
-        const text = selection.toString().trim();
-        if (text && text.length > 0) {
-          const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          const cardBounds = cardRef.current.getBoundingClientRect();
-          setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
-          if (text !== selectedText) {
-            setSelectedText(text);
-            setAnalysis(null);
-          }
-          setPopoverOpen(true);
-        } else {
-          setPopoverOpen(false);
-        }
-      }, 300);
-    };
-    document.addEventListener("selectionchange", handleSelectionChange);
-    return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [popoverOpen, selectedText]);
 
   const handleLearnMore = async () => {
     // Fetch the primary translation before opening the drawer
@@ -112,9 +58,8 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       const data = await response.json();
       setPrimaryTranslation(data.translation?.primaryTranslation || "");
     } catch (err) {
-      // Handle error if needed, maybe show a toast
       console.error(err);
-      setPrimaryTranslation(""); // Clear previous translation on error
+      setPrimaryTranslation("");
     }
 
     setPopoverOpen(false);
@@ -144,10 +89,8 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
-  const isLoadingContent = !content && !error;
-
   return (
-    <div ref={ref}>
+    <div ref={intersectionRef}>
       <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col overflow-hidden">
         {showImages && imageUrl && (
           <div className="relative w-full aspect-[16/9] bg-muted">
@@ -157,10 +100,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
               alt={content || category || 'Fact image'}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={cn(
-                "object-cover transition-opacity duration-300",
-                isImageLoading ? "opacity-0" : "opacity-100"
-              )}
+              className={cn("object-cover transition-opacity duration-300", isImageLoading ? "opacity-0" : "opacity-100")}
               onLoad={() => setIsImageLoading(false)}
             />
           </div>
@@ -174,8 +114,8 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
                 <Skeleton className="h-4 w-full max-w-[300px]" />
                 <Skeleton className="h-4 w-full max-w-[250px]" />
               </div>
-            ) : error ? (
-              <p className="text-destructive">{error}</p>
+            ) : contentError ? (
+              <p className="text-destructive">{contentError}</p>
             ) : (
               <>
                 {category && (
@@ -189,12 +129,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
                     )}
                   </div>
                 )}
-                <p 
-                  className={`leading-relaxed ${fontSize}`}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  {content}
-                </p>
+                <p className={`leading-relaxed ${fontSize}`} onContextMenu={(e) => e.preventDefault()}>{content}</p>
               </>
             )}
           </CardContent>
@@ -208,11 +143,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             </div>
           )}
 
-          <PopoverContent 
-            className="w-fit max-w-sm p-0 translate-z-0 bg-background text-foreground" 
-            side="top" 
-            align="center"
-          >
+          <PopoverContent className="w-fit max-w-sm p-0 translate-z-0 bg-background text-foreground" side="top" align="center">
             <TranslationPopoverContent
               popoverOpen={popoverOpen}
               selectedText={selectedText}
