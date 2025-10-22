@@ -14,11 +14,18 @@ type TopicsViewProps = {
 
 export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: TopicsViewProps) {
   const handleCategoryToggle = (category: string, pressed: boolean) => {
-    setStagedCategories((currentCategories) => {
+    setStagedCategories((current) => {
       if (pressed) {
-        return [...currentCategories, category];
+        // Add the category if it's not already there
+        return current.includes(category) ? current : [...current, category];
       } else {
-        return currentCategories.filter((c) => c !== category);
+        // Prevent removing the last category
+        if (current.length > 1) {
+          return current.filter((c) => c !== category);
+        }
+        // If it's the last one, return a new array instance to force a re-render,
+        // which will snap the toggle back to its `pressed` state.
+        return [...current];
       }
     });
   };
@@ -38,7 +45,6 @@ export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: 
             key={category}
             variant="outline"
             pressed={stagedCategories.includes(category)}
-            disabled={stagedCategories.length === 1 && stagedCategories.includes(category)}
             onPressedChange={(pressed) => handleCategoryToggle(category, pressed)}
             className={cn("capitalize", fontSize)}
           >
