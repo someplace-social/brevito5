@@ -6,12 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Skeleton } from "./ui/skeleton";
-import type { TranslationData } from "@/app/api/translate-word/route";
 import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
-import { Button } from "./ui/button";
 import { WordAnalysisDrawer } from "./word-analysis-drawer";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TranslationPopoverContent } from "./translation-popover-content";
 
 type FactCardProps = {
   factId: string;
@@ -40,14 +39,11 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
-
-  const [translation, setTranslation] = useState<TranslationData | null>(null);
-  const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
-  const [translationError, setTranslationError] = useState<string | null>(null);
   
   const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [primaryTranslation, setPrimaryTranslation] = useState("");
 
   useEffect(() => {
     if (isIntersecting) {
@@ -101,38 +97,29 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     };
   }, [popoverOpen, selectedText]);
 
-  useEffect(() => {
-    if (!selectedText || !popoverOpen) {
-      setTranslation(null);
-      return;
-    }
-    const fetchTranslation = async () => {
-      setIsLoadingTranslation(true);
-      setTranslationError(null);
-      try {
-        const response = await fetch("/api/translate-word", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word: selectedText, factId, level,
-            sourceLanguage: contentLanguage, 
-            targetLanguage: translationLanguage 
-          }),
-        });
-        if (!response.ok) throw new Error("Translation failed");
-        const data = await response.json();
-        setTranslation(data.translation);
-      } catch (err) {
-        setTranslationError(err instanceof Error ? err.message : "An error occurred.");
-      } finally {
-        setIsLoadingTranslation(false);
-      }
-    };
-    fetchTranslation();
-  }, [selectedText, popoverOpen, factId, contentLanguage, translationLanguage, level]);
-
   const handleLearnMore = async () => {
+    // Fetch the primary translation before opening the drawer
+    try {
+      const response = await fetch("/api/translate-word", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: selectedText, factId, level,
+          sourceLanguage: contentLanguage, 
+          targetLanguage: translationLanguage 
+        }),
+      });
+      if (!response.ok) throw new Error("Translation failed");
+      const data = await response.json();
+      setPrimaryTranslation(data.translation?.primaryTranslation || "");
+    } catch (err) {
+      // Handle error if needed, maybe show a toast
+      console.error(err);
+      setPrimaryTranslation(""); // Clear previous translation on error
+    }
+
     setPopoverOpen(false);
     setDrawerOpen(true);
+
     if (!analysis) {
       setIsLoadingAnalysis(true);
       setAnalysisError(null);
@@ -157,18 +144,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
-  const getTranslationFontSize = (baseSize: string) => {
-    const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
-    const currentIndex = sizes.indexOf(baseSize);
-    if (currentIndex === -1 || currentIndex >= sizes.length - 1) {
-      return "text-3xl";
-    }
-    return sizes[currentIndex + 1];
-  };
-
   const isLoadingContent = !content && !error;
-  const isSingleWord = selectedText && !selectedText.includes(" ");
-  const translationFontSize = getTranslationFontSize(fontSize);
 
   return (
     <div ref={ref}>
@@ -237,18 +213,16 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             side="top" 
             align="center"
           >
-            {isLoadingTranslation && <p className="px-3 py-2 text-sm">Translating...</p>}
-            {translationError && <p className="px-3 py-2 text-sm text-destructive">{translationError}</p>}
-            {translation && (
-              <div className="flex flex-col">
-                <p className={`font-semibold px-3 py-2 break-words ${translationFontSize}`}>{translation.primaryTranslation}</p>
-                {isSingleWord && (
-                  <Button variant="ghost" size="sm" className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t border-foreground/10" onClick={handleLearnMore}>
-                    Learn More
-                  </Button>
-                )}
-              </div>
-            )}
+            <TranslationPopoverContent
+              popoverOpen={popoverOpen}
+              selectedText={selectedText}
+              factId={factId}
+              level={level}
+              contentLanguage={contentLanguage}
+              translationLanguage={translationLanguage}
+              baseFontSize={fontSize}
+              onLearnMore={handleLearnMore}
+            />
           </PopoverContent>
         </Popover>
       </Card>
@@ -257,7 +231,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
         isOpen={drawerOpen}
         onOpenChange={setDrawerOpen}
         selectedText={selectedText}
-        initialTranslation={translation?.primaryTranslation || ""}
+        initialTranslation={primaryTranslation}
         analysis={analysis}
         isLoading={isLoadingAnalysis}
         error={analysisError}

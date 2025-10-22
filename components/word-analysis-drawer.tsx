@@ -37,7 +37,7 @@ type WordAnalysisDrawerProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   selectedText: string;
-  initialTranslation: string;
+  initialTranslation?: string;
   analysis: WordAnalysisData | null;
   isLoading: boolean;
   error: string | null;
@@ -55,9 +55,12 @@ export function WordAnalysisDrawer({
   fontSize,
 }: WordAnalysisDrawerProps) {
   // Combine the initial translation with other meanings for a unified list
-  const allMeanings = analysis?.otherMeanings
-    ? [initialTranslation, ...analysis.otherMeanings]
-    : [initialTranslation];
+  const allMeanings =
+    analysis?.otherMeanings && initialTranslation
+      ? [initialTranslation, ...analysis.otherMeanings]
+      : initialTranslation
+        ? [initialTranslation]
+        : analysis?.otherMeanings || [];
 
   // Remove duplicates AND any empty/falsy values to prevent blank bullets
   const uniqueMeanings = [...new Set(allMeanings)].filter(Boolean);
@@ -69,7 +72,7 @@ export function WordAnalysisDrawer({
       <SheetContent side="bottom" className="rounded-t-lg">
         <SheetHeader className="text-left">
           <SheetTitle className="text-2xl">{selectedText}</SheetTitle>
-          <SheetDescription className="text-lg">{initialTranslation}</SheetDescription>
+          <SheetDescription className="text-lg">{initialTranslation || "..."}</SheetDescription>
         </SheetHeader>
         <div className="py-6">
           {isLoading && (
@@ -124,4 +127,4 @@ export function WordAnalysisDrawer({
       </SheetContent>
     </Sheet>
   );
-} 
+}
