@@ -16,12 +16,14 @@ import {
 } from "@/components/ui/select";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { ArrowLeft, ChevronRight, Languages, LayoutGrid, Palette } from "lucide-react";
+import { ArrowLeft, ChevronRight, Languages, LayoutGrid, Palette, Image as ImageIcon } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "./ui/card";
+import { cn } from "@/lib/utils";
 
 type OptionsMenuProps = {
   triggerIcon: ReactNode;
@@ -51,6 +53,29 @@ const categoriesAreEqual = (a: string[], b: string[]) => {
 
 type View = "main" | "topics" | "language" | "appearance";
 
+// A dedicated component for the appearance preview
+function AppearancePreviewCard({ fontSize, showImage }: { fontSize: string; showImage: boolean }) {
+  return (
+    <Card className="w-full overflow-hidden">
+      {showImage && (
+        <div className="bg-muted aspect-[16/9] w-full flex items-center justify-center">
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+        </div>
+      )}
+      <CardContent className="p-4 space-y-3">
+        <p className={cn("leading-tight", fontSize)}>
+          This is how the text will look. Adjust the slider below to change the size.
+        </p>
+        <div className="flex gap-2 text-xs">
+          <div className="flex-1 p-2 rounded-sm bg-primary text-primary-foreground text-center">Primary</div>
+          <div className="flex-1 p-2 rounded-sm bg-secondary text-secondary-foreground text-center">Secondary</div>
+          <div className="flex-1 p-2 rounded-sm bg-accent text-accent-foreground text-center">Accent</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OptionsMenu({
   triggerIcon,
   contentLanguage,
@@ -69,33 +94,44 @@ export function OptionsMenu({
   const [isOpen, setIsOpen] = useState(false);
   const [activeView, setActiveView] = useState<View>("main");
 
+  // Staged state for all settings
   const [stagedContentLanguage, setStagedContentLanguage] = useState(contentLanguage);
   const [stagedTranslationLanguage, setStagedTranslationLanguage] = useState(translationLanguage);
   const [stagedLevel, setStagedLevel] = useState(level);
   const [stagedCategories, setStagedCategories] = useState(selectedCategories);
+  const [stagedFontSize, setStagedFontSize] = useState(fontSize);
+  const [stagedShowImages, setStagedShowImages] = useState(showImages);
 
+  // Sync staged state when the menu opens
   useEffect(() => {
     if (isOpen) {
       setStagedContentLanguage(contentLanguage);
       setStagedTranslationLanguage(translationLanguage);
       setStagedLevel(level);
       setStagedCategories(selectedCategories);
+      setStagedFontSize(fontSize);
+      setStagedShowImages(showImages);
     }
-  }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories]);
+  }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories, fontSize, showImages]);
 
+  // Apply all staged changes when the menu is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       const hasChanges =
         stagedContentLanguage !== contentLanguage ||
         stagedTranslationLanguage !== translationLanguage ||
         stagedLevel !== level ||
-        !categoriesAreEqual(stagedCategories, selectedCategories);
+        !categoriesAreEqual(stagedCategories, selectedCategories) ||
+        stagedFontSize !== fontSize ||
+        stagedShowImages !== showImages;
 
       if (hasChanges) {
         onContentLanguageChange(stagedContentLanguage);
         onTranslationLanguageChange(stagedTranslationLanguage);
         onLevelChange(stagedLevel);
         onSelectedCategoriesChange(stagedCategories);
+        onFontSizeChange(stagedFontSize);
+        onShowImagesChange(stagedShowImages);
       }
     } else {
       setActiveView("main");
@@ -112,7 +148,7 @@ export function OptionsMenu({
     setStagedCategories(newCategories);
   };
   
-  const currentSizeIndex = fontSizes.indexOf(fontSize);
+  const currentSizeIndex = fontSizes.indexOf(stagedFontSize);
 
   const viewTitles: Record<View, string> = {
     main: "Settings",
@@ -128,7 +164,7 @@ export function OptionsMenu({
           {triggerIcon}
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
+      <SheetContent side="right" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
         <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0 flex-row items-center gap-2">
           {activeView !== "main" && (
             <Button variant="ghost" size="icon" onClick={() => setActiveView("main")}>
@@ -224,20 +260,23 @@ export function OptionsMenu({
           )}
 
           {activeView === "appearance" && (
-            <div className="grid gap-6">
-              <div className="grid grid-cols-1 items-center gap-2">
-                <Label>Font Size</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">A</span>
-                  <Slider value={[currentSizeIndex]} onValueChange={(value) => onFontSizeChange(fontSizes[value[0]])} max={fontSizes.length - 1} step={1} />
-                  <span className="text-xl">A</span>
+            <div className="space-y-8">
+              <AppearancePreviewCard fontSize={stagedFontSize} showImage={stagedShowImages} />
+              <div className="grid gap-6">
+                <div className="grid grid-cols-1 items-center gap-2">
+                  <Label>Font Size</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">A</span>
+                    <Slider value={[currentSizeIndex]} onValueChange={(value) => setStagedFontSize(fontSizes[value[0]])} max={fontSizes.length - 1} step={1} />
+                    <span className="text-xl">A</span>
+                  </div>
                 </div>
+                <div className="flex items-center justify-between">
+                  <Label>Show Images</Label>
+                  <Switch checked={stagedShowImages} onCheckedChange={setStagedShowImages} />
+                </div>
+                <ThemeSwitcher />
               </div>
-              <div className="flex items-center justify-between">
-                <Label>Show Images</Label>
-                <Switch checked={showImages} onCheckedChange={onShowImagesChange} />
-              </div>
-              <ThemeSwitcher />
             </div>
           )}
         </div>
