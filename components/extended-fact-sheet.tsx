@@ -182,14 +182,14 @@ export function ExtendedFactSheet({
                       </div>
                     )}
                     {data.category && (
-                      <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className={cn("font-semibold uppercase tracking-wider text-muted-foreground", fontSize)}>
                         {data.category}
                         {data.subcategory && <span> &gt; {data.subcategory}</span>}
                       </div>
                     )}
                     <p className={`leading-relaxed ${fontSize} [-webkit-touch-callout:none]`} onContextMenu={(e) => e.preventDefault()}>{data.content}</p>
                     {data.source && data.source_url && (
-                      <div className="text-sm text-muted-foreground pt-4 border-t">
+                      <div className={cn("text-muted-foreground pt-4 border-t", fontSize)}>
                         <a href={data.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                           Source: {data.source}
                           <ArrowUpRight className="h-4 w-4" />

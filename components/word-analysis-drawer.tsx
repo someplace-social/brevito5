@@ -12,6 +12,7 @@ import { Skeleton } from "./ui/skeleton";
 import React from "react";
 import { Button } from "./ui/button";
 import { ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Helper component to render sentences with the selected word underlined
 const UnderlinedSentence = ({ sentence, word }: { sentence: string; word: string }) => {
@@ -71,8 +72,8 @@ export function WordAnalysisDrawer({
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-lg">
         <SheetHeader className="text-left">
-          <SheetTitle className="text-2xl">{selectedText}</SheetTitle>
-          <SheetDescription className="text-lg">{initialTranslation || "..."}</SheetDescription>
+          <SheetTitle className={cn("text-2xl", fontSize)}>{selectedText}</SheetTitle>
+          <SheetDescription className={cn("text-lg", fontSize)}>{initialTranslation || "..."}</SheetDescription>
         </SheetHeader>
         <div className="py-6">
           {isLoading && (
@@ -117,7 +118,7 @@ export function WordAnalysisDrawer({
           )}
         </div>
         <div className="border-t pt-4">
-          <Button variant="ghost" className="w-full justify-between" asChild>
+          <Button variant="ghost" className={cn("w-full justify-between", fontSize)} asChild>
             <a href={spanishDictUrl} target="_blank" rel="noopener noreferrer">
               Learn Even More
               <ArrowUpRight className="h-4 w-4" />

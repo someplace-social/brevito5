@@ -94,7 +94,7 @@ export function TranslationPopoverContent({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-auto px-3 py-2 text-sm rounded-t-none border-t border-foreground/10"
+            className={cn("w-full h-auto px-3 py-2 rounded-t-none border-t border-foreground/10", baseFontSize)}
             onClick={onLearnMore}
           >
             Learn More
