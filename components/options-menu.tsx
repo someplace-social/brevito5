@@ -14,6 +14,7 @@ import { MainView } from "./options/main-view";
 import { TopicsView } from "./options/topics-view";
 import { LanguageView } from "./options/language-view";
 import { AppearanceView } from "./options/appearance-view";
+import { cn } from "@/lib/utils";
 
 type OptionsMenuProps = {
   triggerIcon: ReactNode;
@@ -127,7 +128,7 @@ export function OptionsMenu({
           <SheetTitle className="text-xl">{viewTitles[activeView]}</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className={cn("flex-1 overflow-y-auto p-4 md:p-6", stagedFontSize)}>
           {activeView === "main" && <MainView setActiveView={setActiveView} />}
           {activeView === "topics" && <TopicsView stagedCategories={stagedCategories} setStagedCategories={setStagedCategories} />}
           {activeView === "language" && (
