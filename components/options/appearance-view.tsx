@@ -52,7 +52,7 @@ export function AppearanceView({
       <AppearancePreviewCard fontSize={stagedFontSize} showImage={stagedShowImages} />
       <div className="grid gap-6">
         <div className="grid grid-cols-1 items-center gap-2">
-          <Label>Font Size</Label>
+          <Label className={stagedFontSize}>Font Size</Label>
           <div className="flex items-center gap-2">
             <span className="text-sm">A</span>
             <Slider
@@ -65,10 +65,10 @@ export function AppearanceView({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <Label>Show Images</Label>
+          <Label className={stagedFontSize}>Show Images</Label>
           <Switch checked={stagedShowImages} onCheckedChange={setStagedShowImages} />
         </div>
-        <ThemeSwitcher />
+        <ThemeSwitcher fontSize={stagedFontSize} />
       </div>
     </div>
   );

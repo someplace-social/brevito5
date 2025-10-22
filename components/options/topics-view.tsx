@@ -2,15 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 
 const availableCategories = ["Science", "Technology", "Health", "History", "Business", "Society", "Art", "Sports", "Environment", "Culture", "Food", "Geography", "Psychology", "Animals", "Space", "Language", "Unusual"];
 
 type TopicsViewProps = {
   stagedCategories: string[];
   setStagedCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  fontSize: string;
 };
 
-export function TopicsView({ stagedCategories, setStagedCategories }: TopicsViewProps) {
+export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: TopicsViewProps) {
   const handleCategoryToggle = (category: string, pressed: boolean) => {
     setStagedCategories((currentCategories) => {
       if (pressed) {
@@ -39,15 +41,15 @@ export function TopicsView({ stagedCategories, setStagedCategories }: TopicsView
             variant="outline"
             pressed={stagedCategories.includes(category)}
             onPressedChange={(pressed) => handleCategoryToggle(category, pressed)}
-            className="capitalize"
+            className={cn("capitalize", fontSize)}
           >
             {category}
           </Toggle>
         ))}
       </div>
       <div className="flex gap-2 pt-4 border-t">
-        <Button variant="secondary" onClick={() => setStagedCategories(availableCategories)} className="flex-1">Select All</Button>
-        <Button variant="secondary" onClick={handleDeselectAll} className="flex-1">Deselect All</Button>
+        <Button variant="secondary" onClick={() => setStagedCategories(availableCategories)} className={cn("flex-1", fontSize)}>Select All</Button>
+        <Button variant="secondary" onClick={handleDeselectAll} className={cn("flex-1", fontSize)}>Deselect All</Button>
       </div>
     </div>
   );

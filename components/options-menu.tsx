@@ -130,7 +130,7 @@ export function OptionsMenu({
 
         <div className={cn("flex-1 overflow-y-auto p-4 md:p-6", stagedFontSize)}>
           {activeView === "main" && <MainView setActiveView={setActiveView} />}
-          {activeView === "topics" && <TopicsView stagedCategories={stagedCategories} setStagedCategories={setStagedCategories} />}
+          {activeView === "topics" && <TopicsView stagedCategories={stagedCategories} setStagedCategories={setStagedCategories} fontSize={stagedFontSize} />}
           {activeView === "language" && (
             <LanguageView
               stagedContentLanguage={stagedContentLanguage}
@@ -139,6 +139,7 @@ export function OptionsMenu({
               setStagedTranslationLanguage={setStagedTranslationLanguage}
               stagedLevel={stagedLevel}
               setStagedLevel={setStagedLevel}
+              fontSize={stagedFontSize}
             />
           )}
           {activeView === "appearance" && (

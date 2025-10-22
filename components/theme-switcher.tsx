@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
+import { cn } from "@/lib/utils";
 
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ fontSize }: { fontSize?: string }) {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -32,12 +33,12 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="grid grid-cols-4 items-center gap-4">
-      <Label htmlFor="theme" className="text-right">
+    <div className="grid grid-cols-1 items-center gap-2">
+      <Label htmlFor="theme" className={cn(fontSize)}>
         Theme
       </Label>
       <Select value={theme ?? ""} onValueChange={setTheme}>
-        <SelectTrigger className="col-span-3">
+        <SelectTrigger className={cn(fontSize)}>
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>
         <SelectContent>
