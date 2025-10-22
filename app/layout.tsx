@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lexend, Lora } from "next/font/google";
+import { Lexend, Roboto } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
@@ -19,10 +19,10 @@ const lexend = Lexend({
   subsets: ["latin"],
 });
 
-const lora = Lora({
+const roboto = Roboto({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "700"],
 });
 
 export default function RootLayout({
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${lora.variable} ${lexend.variable} font-sans antialiased`}
+        className={`${roboto.variable} ${lexend.variable} font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"

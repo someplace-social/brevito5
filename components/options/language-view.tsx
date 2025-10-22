@@ -35,11 +35,11 @@ export function LanguageView({
         <Select value={stagedContentLanguage} onValueChange={setStagedContentLanguage}>
           <SelectTrigger className={fontSize}><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="English">English</SelectItem>
-            <SelectItem value="Spanish">Spanish</SelectItem>
-            <SelectItem value="French">French</SelectItem>
-            <SelectItem value="German">German</SelectItem>
-            <SelectItem value="Italian">Italian</SelectItem>
+            <SelectItem value="English" className={fontSize}>English</SelectItem>
+            <SelectItem value="Spanish" className={fontSize}>Spanish</SelectItem>
+            <SelectItem value="French" className={fontSize}>French</SelectItem>
+            <SelectItem value="German" className={fontSize}>German</SelectItem>
+            <SelectItem value="Italian" className={fontSize}>Italian</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -48,11 +48,11 @@ export function LanguageView({
         <Select value={stagedTranslationLanguage} onValueChange={setStagedTranslationLanguage}>
           <SelectTrigger className={fontSize}><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="English">English</SelectItem>
-            <SelectItem value="Spanish">Spanish</SelectItem>
-            <SelectItem value="French">French</SelectItem>
-            <SelectItem value="German">German</SelectItem>
-            <SelectItem value="Italian">Italian</SelectItem>
+            <SelectItem value="English" className={fontSize}>English</SelectItem>
+            <SelectItem value="Spanish" className={fontSize}>Spanish</SelectItem>
+            <SelectItem value="French" className={fontSize}>French</SelectItem>
+            <SelectItem value="German" className={fontSize}>German</SelectItem>
+            <SelectItem value="Italian" className={fontSize}>Italian</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -61,9 +61,9 @@ export function LanguageView({
         <Select value={stagedLevel} onValueChange={setStagedLevel}>
           <SelectTrigger className={fontSize}><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="Beginner">Beginner</SelectItem>
-            <SelectItem value="Intermediate">Intermediate</SelectItem>
-            <SelectItem value="Advanced">Advanced</SelectItem>
+            <SelectItem value="Beginner" className={fontSize}>Beginner</SelectItem>
+            <SelectItem value="Intermediate" className={fontSize}>Intermediate</SelectItem>
+            <SelectItem value="Advanced" className={fontSize}>Advanced</SelectItem>
           </SelectContent>
         </Select>
       </div>

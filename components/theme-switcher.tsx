@@ -42,14 +42,14 @@ export function ThemeSwitcher({ fontSize }: { fontSize?: string }) {
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="light">Day</SelectItem>
-          <SelectItem value="dark">Night</SelectItem>
-          <SelectItem value="theme-honey">Honey</SelectItem>
-          <SelectItem value="theme-sage">Sage</SelectItem>
-          <SelectItem value="theme-eggplant">Eggplant</SelectItem>
-          <SelectItem value="theme-brick">Brick</SelectItem>
-          <SelectItem value="theme-river">River</SelectItem>
-          <SelectItem value="theme-granite">Granite</SelectItem>
+          <SelectItem value="light" className={cn(fontSize)}>Day</SelectItem>
+          <SelectItem value="dark" className={cn(fontSize)}>Night</SelectItem>
+          <SelectItem value="theme-honey" className={cn(fontSize)}>Honey</SelectItem>
+          <SelectItem value="theme-sage" className={cn(fontSize)}>Sage</SelectItem>
+          <SelectItem value="theme-eggplant" className={cn(fontSize)}>Eggplant</SelectItem>
+          <SelectItem value="theme-brick" className={cn(fontSize)}>Brick</SelectItem>
+          <SelectItem value="theme-river" className={cn(fontSize)}>River</SelectItem>
+          <SelectItem value="theme-granite" className={cn(fontSize)}>Granite</SelectItem>
         </SelectContent>
       </Select>
     </div>

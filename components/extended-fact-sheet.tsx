@@ -144,14 +144,14 @@ export function ExtendedFactSheet({
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
-          <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0">
-            <SheetTitle className="sr-only">Extended Fact Details</SheetTitle>
-            <SheetDescription className="sr-only">
-              More detailed information about the selected fact.
-            </SheetDescription>
+          <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0 flex flex-row items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <ArrowLeft />
             </Button>
+            <SheetTitle className={cn(fontSize)}>Details</SheetTitle>
+            <SheetDescription className="sr-only">
+              More detailed information about the selected fact.
+            </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={contentRef}>
             <div className="max-w-2xl mx-auto relative">
