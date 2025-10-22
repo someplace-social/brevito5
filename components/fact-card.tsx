@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -27,9 +26,10 @@ type FactCardProps = {
   imageUrl: string | null;
   showImages: boolean;
   onCategoryFilter: (category: string) => void;
+  onReadMore: (factId: string) => void;
 };
 
-export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, imageUrl, showImages, onCategoryFilter }: FactCardProps) {
+export function FactCard({ factId, contentLanguage, translationLanguage, level, fontSize, category, subcategory, imageUrl, showImages, onCategoryFilter, onReadMore }: FactCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { ref: intersectionRef, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -88,8 +88,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
     }
   };
 
-  const readMoreUrl = `/fact/${factId}?language=${encodeURIComponent(contentLanguage)}&level=${encodeURIComponent(level)}&fontSize=${encodeURIComponent(fontSize)}&showImages=${showImages}`;
-
   return (
     <div ref={intersectionRef} id={`fact-${factId}`}>
       <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col overflow-hidden">
@@ -136,11 +134,9 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
           </CardContent>
 
           <div className="px-6 pb-4 text-xs text-muted-foreground">
-             <Button variant="link" asChild className="p-0 h-auto">
-                <Link href={readMoreUrl}>
-                  Read More
-                  <ArrowUpRight className="h-3 w-3 ml-1" />
-                </Link>
+             <Button variant="link" onClick={() => onReadMore(factId)} className="p-0 h-auto">
+                Read More
+                <ArrowUpRight className="h-3 w-3 ml-1" />
              </Button>
           </div>
 

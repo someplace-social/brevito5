@@ -5,9 +5,8 @@ import { OptionsMenu } from "@/components/options-menu";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useFactFeed } from "@/hooks/use-fact-feed";
-import { useEffect, useLayoutEffect, useRef } from "react";
-
-const ANCHOR_ID_KEY = "brevito-scroll-anchor-id";
+import { useEffect, useState } from "react";
+import { ExtendedFactSheet } from "@/components/extended-fact-sheet";
 
 export default function Home() {
   const {
@@ -21,7 +20,7 @@ export default function Home() {
     showImages, setShowImages,
   } = useAppSettings();
 
-  const { facts, error, isLoading, hasMore, loadMore, isHydrated } = useFactFeed({
+  const { facts, error, isLoading, hasMore, loadMore } = useFactFeed({
     isInitialized,
     settingsKey,
     selectedCategories,
@@ -29,7 +28,7 @@ export default function Home() {
   });
 
   const { ref: infiniteScrollRef, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
-  const topVisibleFactRef = useRef<string | null>(null);
+  const [extendedFactId, setExtendedFactId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isIntersecting) {
@@ -37,53 +36,17 @@ export default function Home() {
     }
   }, [isIntersecting, loadMore]);
 
-  // This effect sets up an observer to track which fact card is at the top of the viewport
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.boundingClientRect.top >= 0) {
-            topVisibleFactRef.current = entry.target.id;
-          }
-        });
-      },
-      { threshold: 0.5 } // Tracks when 50% of the item is visible
-    );
-
-    const factElements = document.querySelectorAll('[id^="fact-"]');
-    factElements.forEach((el) => observer.observe(el));
-
-    return () => {
-      factElements.forEach((el) => observer.unobserve(el));
-      // When we navigate away, save the last known top-visible fact ID
-      if (topVisibleFactRef.current) {
-        sessionStorage.setItem(ANCHOR_ID_KEY, topVisibleFactRef.current);
-      }
-    };
-  }, [facts]); // Rerun this effect when the list of facts changes
-
-  // This effect restores the scroll position to the saved anchor fact
-  useLayoutEffect(() => {
-    if (isHydrated && facts.length > 0) {
-      const anchorId = sessionStorage.getItem(ANCHOR_ID_KEY);
-      if (anchorId) {
-        const anchorElement = document.getElementById(anchorId);
-        if (anchorElement) {
-          // Use a timeout to ensure the browser has had time to paint
-          setTimeout(() => {
-            anchorElement.scrollIntoView({ block: 'start' });
-            sessionStorage.removeItem(ANCHOR_ID_KEY);
-          }, 100); // A small delay can make a big difference on mobile
-        }
-      }
-    }
-  }, [isHydrated, facts.length]);
-
   const handleCategoryFilter = (category: string) => {
     const isAlreadyFiltered = selectedCategories.length === 1 && selectedCategories[0] === category;
     
     if (category && !isAlreadyFiltered) {
       setSelectedCategories([category]);
+    }
+  };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setExtendedFactId(null);
     }
   };
 
@@ -130,6 +93,7 @@ export default function Home() {
               imageUrl={fact.image_url}
               showImages={showImages}
               onCategoryFilter={handleCategoryFilter}
+              onReadMore={setExtendedFactId}
             />
           ))}
 
@@ -146,6 +110,15 @@ export default function Home() {
           )}
         </div>
       </div>
+      <ExtendedFactSheet
+        factId={extendedFactId}
+        isOpen={!!extendedFactId}
+        onOpenChange={handleOpenChange}
+        language={contentLanguage}
+        level={level}
+        fontSize={fontSize}
+        showImages={showImages}
+      />
     </main>
   );
 }
