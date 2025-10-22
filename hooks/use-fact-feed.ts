@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type Fact = {
   id: string;
@@ -12,22 +12,22 @@ type Fact = {
 };
 
 type UseFactFeedProps = {
-  isInitialized: boolean;
-  settingsKey: number; // This is now the dataKey
+  settingsKey: number;
   selectedCategories: string[];
   contentLanguage: string;
 };
 
 const PAGE_LIMIT = 5;
 
-export function useFactFeed({ isInitialized, settingsKey, selectedCategories, contentLanguage }: UseFactFeedProps) {
+export function useFactFeed({ settingsKey, selectedCategories, contentLanguage }: UseFactFeedProps) {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [error, setError] = useState("");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const prevSettingsKey = useRef(settingsKey);
 
-  const fetchFacts = useCallback(async (fetchPage: number) => {
+  const fetchFacts = useCallback(async (fetchPage: number, isReset: boolean) => {
     setIsLoading(true);
     setError("");
     try {
@@ -35,19 +35,17 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
       const response = await fetch(
         `/api/get-facts?page=${fetchPage}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
       );
-      if (!response.ok) throw new Error("Failed to fetch facts");
-      const newFacts: Fact[] = await response.json();
-
-      if (newFacts.length < PAGE_LIMIT) {
-        setHasMore(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch facts");
       }
-
-      setFacts((prevFacts) => {
-        const combined = fetchPage === 0 ? newFacts : [...prevFacts, ...newFacts];
-        const uniqueFacts = Array.from(new Map(combined.map(f => [f.id, f])).values());
-        return uniqueFacts;
+      const newFacts: Fact[] = await response.json();
+      setHasMore(newFacts.length === PAGE_LIMIT);
+      setFacts(prevFacts => {
+        const currentFacts = isReset ? [] : prevFacts;
+        const combined = [...currentFacts, ...newFacts];
+        return Array.from(new Map(combined.map(f => [f.id, f])).values());
       });
-
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
@@ -55,28 +53,24 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     }
   }, [selectedCategories, contentLanguage]);
 
-  // Effect to reset and fetch on settings change
   useEffect(() => {
-    if (isInitialized) {
+    const isReset = prevSettingsKey.current !== settingsKey;
+    if (isReset) {
+      prevSettingsKey.current = settingsKey;
       setFacts([]);
       setPage(0);
-      setHasMore(true);
-      // This effect will trigger a fetch for page 0 via the next effect
+      fetchFacts(0, true);
+    } else {
+      fetchFacts(page, false);
     }
-  }, [settingsKey, isInitialized]);
-
-  // Effect to fetch facts when page changes or after a reset
-  useEffect(() => {
-    if (isInitialized) {
-      fetchFacts(page);
-    }
-  }, [page, fetchFacts, isInitialized]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, settingsKey]);
   
   const loadMore = () => {
     if (hasMore && !isLoading) {
-      setPage((prevPage) => prevPage + 1);
+      setPage(prevPage => prevPage + 1);
     }
   };
 
   return { facts, error, isLoading, hasMore, loadMore };
-} 
+}

@@ -14,10 +14,8 @@ export function useAppSettings() {
   const [showImages, setShowImages] = useState(true);
   
   const [isInitialized, setIsInitialized] = useState(false);
-  // This key changes ONLY when data needs to be refetched.
-  const [dataKey, setDataKey] = useState(0);
+  const [settingsKey, setSettingsKey] = useState(0);
 
-  // Load settings from localStorage on initial mount
   useEffect(() => {
     const savedContentLang = localStorage.getItem("brevito-content-language");
     const savedTranslationLang = localStorage.getItem("brevito-translation-language");
@@ -44,29 +42,26 @@ export function useAppSettings() {
     setIsInitialized(true);
   }, []);
 
-  // Effect to save all settings to localStorage whenever they change.
   useEffect(() => {
     if (!isInitialized) return;
-
     localStorage.setItem("brevito-content-language", contentLanguage);
     localStorage.setItem("brevito-translation-language", translationLanguage);
     localStorage.setItem("brevito-level", level);
     localStorage.setItem("brevito-font-size", fontSize);
     localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
     localStorage.setItem("brevito-show-images", JSON.stringify(showImages));
-    
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages, isInitialized]);
 
-  // Effect to update the dataKey ONLY when data-fetching settings change.
   useEffect(() => {
     if (!isInitialized) return;
-    setDataKey(prevKey => prevKey + 1);
-  }, [contentLanguage, selectedCategories, isInitialized]);
+    setSettingsKey(prevKey => prevKey + 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentLanguage, selectedCategories]);
 
 
   return {
     isInitialized,
-    dataKey, // Use this instead of settingsKey
+    settingsKey,
     contentLanguage, setContentLanguage,
     translationLanguage, setTranslationLanguage,
     level, setLevel,

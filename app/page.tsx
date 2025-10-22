@@ -11,8 +11,7 @@ import { Menu } from "lucide-react";
 
 export default function Home() {
   const {
-    isInitialized,
-    dataKey, // Changed from settingsKey
+    settingsKey,
     contentLanguage, setContentLanguage,
     translationLanguage, setTranslationLanguage,
     level, setLevel,
@@ -22,8 +21,7 @@ export default function Home() {
   } = useAppSettings();
 
   const { facts, error, isLoading, hasMore, loadMore } = useFactFeed({
-    isInitialized,
-    settingsKey: dataKey, // Pass dataKey here
+    settingsKey,
     selectedCategories,
     contentLanguage,
   });
@@ -50,6 +48,8 @@ export default function Home() {
       setExtendedFactId(null);
     }
   };
+
+  const showInitialLoading = isLoading && facts.length === 0;
 
   return (
     <main className="flex flex-col items-center min-h-screen">
@@ -84,7 +84,7 @@ export default function Home() {
         <div className="w-full max-w-2xl flex flex-col gap-4">
           {facts.map((fact) => (
             <FactCard
-              key={`${fact.id}-${dataKey}`} // Changed from settingsKey
+              key={`${fact.id}-${settingsKey}`}
               factId={fact.id}
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
@@ -101,7 +101,7 @@ export default function Home() {
 
           {hasMore && !isLoading && <div ref={infiniteScrollRef} className="h-1" />}
 
-          {isLoading && (
+          {showInitialLoading && (
             <p className="text-center text-muted-foreground py-4">Loading...</p>
           )}
           {error && <p className="text-center text-red-500 py-4">{error}</p>}
