@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { TranslationPopoverContent } from "./translation-popover-content";
 import { useFactContent } from "@/hooks/use-fact-content";
 import { useTextSelection } from "@/hooks/use-text-selection";
+import { Button } from "./ui/button";
 
 type FactCardProps = {
   factId: string;
@@ -44,7 +46,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [primaryTranslation, setPrimaryTranslation] = useState("");
 
   const handleLearnMore = async () => {
-    // Fetch the primary translation before opening the drawer
     try {
       const response = await fetch("/api/translate-word", {
         method: "POST",
@@ -88,6 +89,8 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
       }
     }
   };
+
+  const readMoreUrl = `/fact/${factId}?language=${encodeURIComponent(contentLanguage)}&level=${encodeURIComponent(level)}&fontSize=${encodeURIComponent(fontSize)}&showImages=${showImages}`;
 
   return (
     <div ref={intersectionRef}>
@@ -134,14 +137,14 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             )}
           </CardContent>
 
-          {source && sourceUrl && (
-            <div className="px-6 pb-4 text-xs text-muted-foreground">
-              <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-                Source: {source}
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
-            </div>
-          )}
+          <div className="px-6 pb-4 text-xs text-muted-foreground">
+             <Button variant="link" asChild className="p-0 h-auto">
+                <Link href={readMoreUrl}>
+                  Read More
+                  <ArrowUpRight className="h-3 w-3 ml-1" />
+                </Link>
+             </Button>
+          </div>
 
           <PopoverContent className="w-fit max-w-sm p-0 translate-z-0 bg-background text-foreground" side="top" align="center">
             <TranslationPopoverContent
