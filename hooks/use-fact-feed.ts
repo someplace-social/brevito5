@@ -19,6 +19,14 @@ type UseFactFeedProps = {
 };
 
 const PAGE_LIMIT = 5;
+const FEED_CACHE_KEY = "brevito-feed-cache";
+
+type CachedFeed = {
+  facts: Fact[];
+  page: number;
+  hasMore: boolean;
+  timestamp: number;
+};
 
 export function useFactFeed({ isInitialized, settingsKey, selectedCategories, contentLanguage }: UseFactFeedProps) {
   const [facts, setFacts] = useState<Fact[]>([]);
@@ -26,16 +34,54 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Effect to hydrate state from sessionStorage on initial load
+  useEffect(() => {
+    try {
+      const cachedData = sessionStorage.getItem(FEED_CACHE_KEY);
+      if (cachedData) {
+        const { facts: cachedFacts, page: cachedPage, hasMore: cachedHasMore, timestamp }: CachedFeed = JSON.parse(cachedData);
+        // Invalidate cache after 15 minutes
+        if (Date.now() - timestamp < 15 * 60 * 1000) {
+          setFacts(cachedFacts);
+          setPage(cachedPage);
+          setHasMore(cachedHasMore);
+        } else {
+          sessionStorage.removeItem(FEED_CACHE_KEY);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse cached feed", e);
+      sessionStorage.removeItem(FEED_CACHE_KEY);
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Effect to save state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (!isHydrated) return;
+    const cache: CachedFeed = { facts, page, hasMore, timestamp: Date.now() };
+    sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify(cache));
+  }, [facts, page, hasMore, isHydrated]);
 
   // Reset feed when settings change
   useEffect(() => {
     if (!isInitialized) return;
-    setFacts([]);
-    setPage(0);
-    setHasMore(true);
+    // The initial settingsKey change (0 -> 1) happens on first load,
+    // we don't want to clear the hydrated cache in that case.
+    if (settingsKey > 1) {
+      setFacts([]);
+      setPage(0);
+      setHasMore(true);
+      sessionStorage.removeItem(FEED_CACHE_KEY);
+    }
   }, [settingsKey, isInitialized]);
 
   const fetchFacts = useCallback(async (currentPage: number) => {
+    // Prevent fetching if we already have facts from hydration
+    if (currentPage === 0 && facts.length > 0) return;
+
     setIsLoading(true);
     setError("");
     try {
@@ -51,8 +97,7 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
       }
 
       setFacts((prevFacts) => {
-        // If it's the first page, replace the facts. Otherwise, append.
-        const combinedFacts = currentPage === 0 ? newFacts : [...prevFacts, ...newFacts];
+        const combinedFacts = [...prevFacts, ...newFacts];
         const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
         return Array.from(uniqueFactsMap.values());
       });
@@ -62,15 +107,15 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCategories, contentLanguage]);
+  }, [selectedCategories, contentLanguage, facts.length]);
 
   // Effect to fetch facts when page or settings change
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && isHydrated) {
       fetchFacts(page);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, settingsKey, isInitialized]);
+  }, [page, settingsKey, isInitialized, isHydrated]);
   
   const loadMore = () => {
     if (hasMore && !isLoading) {
@@ -78,5 +123,5 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     }
   };
 
-  return { facts, error, isLoading, hasMore, loadMore };
+  return { facts, error, isLoading, hasMore, loadMore, isHydrated };
 }

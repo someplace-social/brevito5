@@ -5,7 +5,9 @@ import { OptionsMenu } from "@/components/options-menu";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useFactFeed } from "@/hooks/use-fact-feed";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+
+const SCROLL_POSITION_KEY = "brevito-scroll-position";
 
 export default function Home() {
   const {
@@ -19,7 +21,7 @@ export default function Home() {
     showImages, setShowImages,
   } = useAppSettings();
 
-  const { facts, error, isLoading, hasMore, loadMore } = useFactFeed({
+  const { facts, error, isLoading, hasMore, loadMore, isHydrated } = useFactFeed({
     isInitialized,
     settingsKey,
     selectedCategories,
@@ -33,6 +35,24 @@ export default function Home() {
       loadMore();
     }
   }, [isIntersecting, loadMore]);
+
+  // Save scroll position on unmount (when navigating away)
+  useEffect(() => {
+    return () => {
+      sessionStorage.setItem(SCROLL_POSITION_KEY, window.scrollY.toString());
+    };
+  }, []);
+
+  // Restore scroll position on mount
+  useLayoutEffect(() => {
+    if (isHydrated && facts.length > 0) {
+      const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
+      if (savedPosition) {
+        window.scrollTo(0, parseInt(savedPosition, 10));
+        sessionStorage.removeItem(SCROLL_POSITION_KEY);
+      }
+    }
+  }, [isHydrated, facts.length]);
 
   const handleCategoryFilter = (category: string) => {
     const isAlreadyFiltered = selectedCategories.length === 1 && selectedCategories[0] === category;
