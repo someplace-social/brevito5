@@ -5,9 +5,9 @@ import { OptionsMenu } from "@/components/options-menu";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useFactFeed } from "@/hooks/use-fact-feed";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
-const SCROLL_POSITION_KEY = "brevito-scroll-position";
+const ANCHOR_ID_KEY = "brevito-scroll-anchor-id";
 
 export default function Home() {
   const {
@@ -28,7 +28,8 @@ export default function Home() {
     contentLanguage,
   });
 
-  const { ref, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
+  const { ref: infiniteScrollRef, isIntersecting } = useIntersectionObserver({ threshold: 1.0 });
+  const topVisibleFactRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isIntersecting) {
@@ -36,20 +37,44 @@ export default function Home() {
     }
   }, [isIntersecting, loadMore]);
 
-  // Save scroll position on unmount (when navigating away)
+  // This effect sets up an observer to track which fact card is at the top of the viewport
   useEffect(() => {
-    return () => {
-      sessionStorage.setItem(SCROLL_POSITION_KEY, window.scrollY.toString());
-    };
-  }, []);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.boundingClientRect.top >= 0) {
+            topVisibleFactRef.current = entry.target.id;
+          }
+        });
+      },
+      { threshold: 0.5 } // Tracks when 50% of the item is visible
+    );
 
-  // Restore scroll position on mount
+    const factElements = document.querySelectorAll('[id^="fact-"]');
+    factElements.forEach((el) => observer.observe(el));
+
+    return () => {
+      factElements.forEach((el) => observer.unobserve(el));
+      // When we navigate away, save the last known top-visible fact ID
+      if (topVisibleFactRef.current) {
+        sessionStorage.setItem(ANCHOR_ID_KEY, topVisibleFactRef.current);
+      }
+    };
+  }, [facts]); // Rerun this effect when the list of facts changes
+
+  // This effect restores the scroll position to the saved anchor fact
   useLayoutEffect(() => {
     if (isHydrated && facts.length > 0) {
-      const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
-      if (savedPosition) {
-        window.scrollTo(0, parseInt(savedPosition, 10));
-        sessionStorage.removeItem(SCROLL_POSITION_KEY);
+      const anchorId = sessionStorage.getItem(ANCHOR_ID_KEY);
+      if (anchorId) {
+        const anchorElement = document.getElementById(anchorId);
+        if (anchorElement) {
+          // Use a timeout to ensure the browser has had time to paint
+          setTimeout(() => {
+            anchorElement.scrollIntoView({ block: 'start' });
+            sessionStorage.removeItem(ANCHOR_ID_KEY);
+          }, 100); // A small delay can make a big difference on mobile
+        }
       }
     }
   }, [isHydrated, facts.length]);
@@ -108,7 +133,7 @@ export default function Home() {
             />
           ))}
 
-          {hasMore && !isLoading && <div ref={ref} className="h-1" />}
+          {hasMore && !isLoading && <div ref={infiniteScrollRef} className="h-1" />}
 
           {isLoading && (
             <p className="text-center text-muted-foreground py-4">Loading...</p>

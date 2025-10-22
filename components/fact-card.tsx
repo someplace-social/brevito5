@@ -91,7 +91,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const readMoreUrl = `/fact/${factId}?language=${encodeURIComponent(contentLanguage)}&level=${encodeURIComponent(level)}&fontSize=${encodeURIComponent(fontSize)}&showImages=${showImages}`;
 
   return (
-    <div ref={intersectionRef}>
+    <div ref={intersectionRef} id={`fact-${factId}`}>
       <Card ref={cardRef} className="w-full min-h-[100px] relative flex flex-col overflow-hidden">
         {showImages && imageUrl && (
           <div className="relative w-full aspect-[16/9] bg-muted">
