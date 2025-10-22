@@ -6,6 +6,8 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
@@ -81,6 +83,10 @@ export function ExtendedFactSheet({
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
         <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0">
+          <SheetTitle className="sr-only">Extended Fact Details</SheetTitle>
+          <SheetDescription className="sr-only">
+            More detailed information about the selected fact.
+          </SheetDescription>
           <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
             <ArrowLeft />
           </Button>
