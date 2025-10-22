@@ -79,9 +79,6 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
   }, [settingsKey, isInitialized]);
 
   const fetchFacts = useCallback(async (currentPage: number) => {
-    // Prevent fetching if we already have facts from hydration
-    if (currentPage === 0 && facts.length > 0) return;
-
     setIsLoading(true);
     setError("");
     try {
@@ -97,7 +94,8 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
       }
 
       setFacts((prevFacts) => {
-        const combinedFacts = [...prevFacts, ...newFacts];
+        // If it's the first page (a refresh or initial load), replace the facts. Otherwise, append.
+        const combinedFacts = currentPage === 0 ? newFacts : [...prevFacts, ...newFacts];
         const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
         return Array.from(uniqueFactsMap.values());
       });
@@ -107,12 +105,19 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCategories, contentLanguage, facts.length]);
+  }, [selectedCategories, contentLanguage]);
 
   // Effect to fetch facts when page or settings change
   useEffect(() => {
     if (isInitialized && isHydrated) {
-      fetchFacts(page);
+      // If we are on page 0 and have no facts, it's an initial load (or a reset).
+      if (page === 0 && facts.length === 0) {
+        fetchFacts(0);
+      } 
+      // If the page number has changed (from scrolling), fetch the next page.
+      else if (page > 0) {
+        fetchFacts(page);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, settingsKey, isInitialized, isHydrated]);
