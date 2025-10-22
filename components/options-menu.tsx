@@ -40,7 +40,7 @@ type OptionsMenuProps = {
 };
 
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
-const availableCategories = ["Culture", "Geography", "History", "Human Body", "Miscellaneous", "Science"];
+const availableCategories = ["Science", "Technology", "Health", "History", "Business", "Society", "Art", "Sports", "Environment", "Culture", "Food", "Geography", "Psychology", "Animals", "Space", "Language", "Unusual"];
 
 const categoriesAreEqual = (a: string[], b: string[]) => {
   if (a.length !== b.length) return false;
