@@ -15,7 +15,7 @@ type Fact = {
 };
 
 const PAGE_LIMIT = 5;
-const availableCategories = ["Culture", "Geography", "History", "Human Body", "Miscellaneous", "Science"];
+const availableCategories = ["Science", "Technology", "Health", "History", "Business", "Society", "Art", "Sports", "Environment", "Culture", "Food", "Geography", "Psychology", "Animals", "Space", "Language", "Unusual"];
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 
 export default function Home() {
@@ -129,10 +129,8 @@ export default function Home() {
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages]);
   
   const handleCategoryFilter = (category: string) => {
-    // Check if the feed is already filtered to only this one category.
     const isAlreadyFiltered = selectedCategories.length === 1 && selectedCategories[0] === category;
     
-    // If it's not already filtered, update the state to filter by this category.
     if (category && !isAlreadyFiltered) {
       setSelectedCategories([category]);
     }
