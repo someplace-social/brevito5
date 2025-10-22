@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
-import { Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
 
@@ -14,8 +14,14 @@ function AppearancePreviewCard({ fontSize, showImage }: { fontSize: string; show
   return (
     <Card className="w-full overflow-hidden">
       {showImage && (
-        <div className="bg-muted aspect-[16/9] w-full flex items-center justify-center">
-          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+        <div className="relative bg-muted aspect-[16/9] w-full">
+          <Image
+            src="https://cdn.pixabay.com/photo/2021/03/11/02/57/mountain-6086083_640.jpg"
+            alt="Appearance Preview"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
         </div>
       )}
       <CardContent className="p-4 space-y-3">
