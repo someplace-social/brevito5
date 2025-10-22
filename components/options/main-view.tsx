@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ChevronRight, Languages, LayoutGrid, Palette } from "lucide-react";
 
 type MainViewProps = {
