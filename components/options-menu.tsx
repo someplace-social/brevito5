@@ -139,17 +139,16 @@ export function OptionsMenu({
     setIsOpen(open);
   };
 
-  const handleCategoryToggle = (category: string) => {
-    setStagedCategories((prev) => {
-      const isCurrentlySelected = prev.includes(category);
-      // Prevent deselecting the last item
-      if (isCurrentlySelected && prev.length === 1) {
-        return prev;
+  const handleCategoryToggle = (category: string, pressed: boolean) => {
+    setStagedCategories((currentCategories) => {
+      if (pressed) {
+        return [...currentCategories, category];
+      } else {
+        if (currentCategories.length === 1) {
+          return currentCategories; // Prevent deselecting the last item
+        }
+        return currentCategories.filter((c) => c !== category);
       }
-      // Toggle the category
-      return isCurrentlySelected
-        ? prev.filter((c) => c !== category)
-        : [...prev, category];
     });
   };
   
@@ -210,14 +209,20 @@ export function OptionsMenu({
             <div className="space-y-6">
               <div className="flex flex-wrap gap-2">
                 {availableCategories.map((category) => (
-                  <Toggle key={category} variant="outline" pressed={stagedCategories.includes(category)} onPressedChange={() => handleCategoryToggle(category)} className="capitalize">
+                  <Toggle
+                    key={category}
+                    variant="outline"
+                    pressed={stagedCategories.includes(category)}
+                    onPressedChange={(pressed) => handleCategoryToggle(category, pressed)}
+                    className="capitalize"
+                  >
                     {category}
                   </Toggle>
                 ))}
               </div>
               <div className="flex gap-2 pt-4 border-t">
                   <Button variant="secondary" onClick={() => setStagedCategories(availableCategories)} className="flex-1">Select All</Button>
-                  <Button variant="secondary" onClick={() => stagedCategories.length > 1 && setStagedCategories([stagedCategories[0]])} className="flex-1">Deselect All</Button>
+                  <Button variant="secondary" onClick={() => setStagedCategories(prev => prev.length > 1 ? [prev[0]] : prev)} className="flex-1">Deselect All</Button>
               </div>
             </div>
           )}
