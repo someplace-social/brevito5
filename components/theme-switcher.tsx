@@ -13,21 +13,34 @@ import { Label } from "./ui/label";
 import { Skeleton } from "./ui/skeleton";
 import { cn } from "@/lib/utils";
 
-export function ThemeSwitcher({ fontSize }: { fontSize?: string }) {
+type ThemeSwitcherProps = {
+  fontSize?: string;
+  stagedTheme: string | undefined;
+  setStagedTheme: (theme: string) => void;
+};
+
+export function ThemeSwitcher({ fontSize, stagedTheme, setStagedTheme }: ThemeSwitcherProps) {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  // Apply the theme change whenever the staged theme changes
+  useEffect(() => {
+    if (stagedTheme) {
+      setTheme(stagedTheme);
+    }
+  }, [stagedTheme, setTheme]);
+
+  if (!mounted || !stagedTheme) {
     return (
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="theme" className="text-right">
+      <div className="grid grid-cols-1 items-center gap-2">
+        <Label htmlFor="theme" className={cn(fontSize)}>
           Theme
         </Label>
-        <Skeleton className="h-9 w-full col-span-3" />
+        <Skeleton className="h-9 w-full" />
       </div>
     );
   }
@@ -37,7 +50,7 @@ export function ThemeSwitcher({ fontSize }: { fontSize?: string }) {
       <Label htmlFor="theme" className={cn(fontSize)}>
         Theme
       </Label>
-      <Select value={theme ?? ""} onValueChange={setTheme}>
+      <Select value={stagedTheme} onValueChange={setStagedTheme}>
         <SelectTrigger className={cn(fontSize)}>
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>

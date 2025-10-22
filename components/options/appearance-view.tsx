@@ -37,6 +37,8 @@ type AppearanceViewProps = {
   setStagedFontSize: (value: string) => void;
   stagedShowImages: boolean;
   setStagedShowImages: (value: boolean) => void;
+  stagedTheme: string | undefined;
+  setStagedTheme: (value: string) => void;
 };
 
 export function AppearanceView({
@@ -44,6 +46,8 @@ export function AppearanceView({
   setStagedFontSize,
   stagedShowImages,
   setStagedShowImages,
+  stagedTheme,
+  setStagedTheme,
 }: AppearanceViewProps) {
   const currentSizeIndex = fontSizes.indexOf(stagedFontSize);
 
@@ -68,7 +72,11 @@ export function AppearanceView({
           <Label className={stagedFontSize}>Show Images</Label>
           <Switch checked={stagedShowImages} onCheckedChange={setStagedShowImages} />
         </div>
-        <ThemeSwitcher fontSize={stagedFontSize} />
+        <ThemeSwitcher
+          fontSize={stagedFontSize}
+          stagedTheme={stagedTheme}
+          setStagedTheme={setStagedTheme}
+        />
       </div>
     </div>
   );

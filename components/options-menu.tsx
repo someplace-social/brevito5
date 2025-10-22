@@ -15,6 +15,7 @@ import { TopicsView } from "./options/topics-view";
 import { LanguageView } from "./options/language-view";
 import { AppearanceView } from "./options/appearance-view";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 type OptionsMenuProps = {
   triggerIcon: ReactNode;
@@ -58,6 +59,7 @@ export function OptionsMenu({
 }: OptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeView, setActiveView] = useState<View>("main");
+  const { theme } = useTheme();
 
   // Staged state for all settings
   const [stagedContentLanguage, setStagedContentLanguage] = useState(contentLanguage);
@@ -66,6 +68,7 @@ export function OptionsMenu({
   const [stagedCategories, setStagedCategories] = useState(selectedCategories);
   const [stagedFontSize, setStagedFontSize] = useState(fontSize);
   const [stagedShowImages, setStagedShowImages] = useState(showImages);
+  const [stagedTheme, setStagedTheme] = useState(theme);
 
   // Sync staged state when the menu opens
   useEffect(() => {
@@ -76,8 +79,9 @@ export function OptionsMenu({
       setStagedCategories(selectedCategories);
       setStagedFontSize(fontSize);
       setStagedShowImages(showImages);
+      setStagedTheme(theme);
     }
-  }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories, fontSize, showImages]);
+  }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories, fontSize, showImages, theme]);
 
   // Apply all staged changes when the menu is closed
   const handleOpenChange = (open: boolean) => {
@@ -148,6 +152,8 @@ export function OptionsMenu({
               setStagedFontSize={setStagedFontSize}
               stagedShowImages={stagedShowImages}
               setStagedShowImages={setStagedShowImages}
+              stagedTheme={stagedTheme}
+              setStagedTheme={setStagedTheme}
             />
           )}
         </div>
