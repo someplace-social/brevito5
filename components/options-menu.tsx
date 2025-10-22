@@ -140,12 +140,17 @@ export function OptionsMenu({
   };
 
   const handleCategoryToggle = (category: string) => {
-    const isCurrentlySelected = stagedCategories.includes(category);
-    if (isCurrentlySelected && stagedCategories.length === 1) return;
-    const newCategories = isCurrentlySelected
-      ? stagedCategories.filter((c) => c !== category)
-      : [...stagedCategories, category];
-    setStagedCategories(newCategories);
+    setStagedCategories((prev) => {
+      const isCurrentlySelected = prev.includes(category);
+      // Prevent deselecting the last item
+      if (isCurrentlySelected && prev.length === 1) {
+        return prev;
+      }
+      // Toggle the category
+      return isCurrentlySelected
+        ? prev.filter((c) => c !== category)
+        : [...prev, category];
+    });
   };
   
   const currentSizeIndex = fontSizes.indexOf(stagedFontSize);
@@ -212,7 +217,7 @@ export function OptionsMenu({
               </div>
               <div className="flex gap-2 pt-4 border-t">
                   <Button variant="secondary" onClick={() => setStagedCategories(availableCategories)} className="flex-1">Select All</Button>
-                  <Button variant="secondary" onClick={() => setStagedCategories([availableCategories[0]])} className="flex-1">Deselect All</Button>
+                  <Button variant="secondary" onClick={() => stagedCategories.length > 1 && setStagedCategories([stagedCategories[0]])} className="flex-1">Deselect All</Button>
               </div>
             </div>
           )}
