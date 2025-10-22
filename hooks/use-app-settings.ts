@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 const availableCategories = ["Science", "Technology", "Health", "History", "Business", "Society", "Art", "Sports", "Environment", "Culture", "Food", "Geography", "Psychology", "Animals", "Space", "Language", "Unusual"];
 const fontSizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
@@ -14,7 +14,8 @@ export function useAppSettings() {
   const [showImages, setShowImages] = useState(true);
   
   const [isInitialized, setIsInitialized] = useState(false);
-  const [settingsKey, setSettingsKey] = useState(0);
+  // This key changes ONLY when data needs to be refetched.
+  const [dataKey, setDataKey] = useState(0);
 
   // Load settings from localStorage on initial mount
   useEffect(() => {
@@ -43,7 +44,7 @@ export function useAppSettings() {
     setIsInitialized(true);
   }, []);
 
-  // Effect to save settings and increment key when they change
+  // Effect to save all settings to localStorage whenever they change.
   useEffect(() => {
     if (!isInitialized) return;
 
@@ -54,12 +55,18 @@ export function useAppSettings() {
     localStorage.setItem("brevito-categories", JSON.stringify(selectedCategories));
     localStorage.setItem("brevito-show-images", JSON.stringify(showImages));
     
-    setSettingsKey(prevKey => prevKey + 1);
   }, [contentLanguage, translationLanguage, level, fontSize, selectedCategories, showImages, isInitialized]);
+
+  // Effect to update the dataKey ONLY when data-fetching settings change.
+  useEffect(() => {
+    if (!isInitialized) return;
+    setDataKey(prevKey => prevKey + 1);
+  }, [contentLanguage, selectedCategories, isInitialized]);
+
 
   return {
     isInitialized,
-    settingsKey,
+    dataKey, // Use this instead of settingsKey
     contentLanguage, setContentLanguage,
     translationLanguage, setTranslationLanguage,
     level, setLevel,

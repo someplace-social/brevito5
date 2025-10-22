@@ -13,78 +13,27 @@ type Fact = {
 
 type UseFactFeedProps = {
   isInitialized: boolean;
-  settingsKey: number;
+  settingsKey: number; // This is now the dataKey
   selectedCategories: string[];
   contentLanguage: string;
 };
 
 const PAGE_LIMIT = 5;
-const FEED_CACHE_KEY = "brevito-feed-cache";
-
-type CachedFeed = {
-  facts: Fact[];
-  page: number;
-  hasMore: boolean;
-  timestamp: number;
-};
 
 export function useFactFeed({ isInitialized, settingsKey, selectedCategories, contentLanguage }: UseFactFeedProps) {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [error, setError] = useState("");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Effect to hydrate state from sessionStorage on initial load
-  useEffect(() => {
-    try {
-      const cachedData = sessionStorage.getItem(FEED_CACHE_KEY);
-      if (cachedData) {
-        const { facts: cachedFacts, page: cachedPage, hasMore: cachedHasMore, timestamp }: CachedFeed = JSON.parse(cachedData);
-        // Invalidate cache after 15 minutes
-        if (Date.now() - timestamp < 15 * 60 * 1000) {
-          setFacts(cachedFacts);
-          setPage(cachedPage);
-          setHasMore(cachedHasMore);
-        } else {
-          sessionStorage.removeItem(FEED_CACHE_KEY);
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse cached feed", e);
-      sessionStorage.removeItem(FEED_CACHE_KEY);
-    }
-    setIsHydrated(true);
-  }, []);
-
-  // Effect to save state to sessionStorage whenever it changes
-  useEffect(() => {
-    if (!isHydrated) return;
-    const cache: CachedFeed = { facts, page, hasMore, timestamp: Date.now() };
-    sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify(cache));
-  }, [facts, page, hasMore, isHydrated]);
-
-  // Reset feed when settings change
-  useEffect(() => {
-    if (!isInitialized) return;
-    // The initial settingsKey change (0 -> 1) happens on first load,
-    // we don't want to clear the hydrated cache in that case.
-    if (settingsKey > 1) {
-      setFacts([]);
-      setPage(0);
-      setHasMore(true);
-      sessionStorage.removeItem(FEED_CACHE_KEY);
-    }
-  }, [settingsKey, isInitialized]);
-
-  const fetchFacts = useCallback(async (currentPage: number) => {
+  const fetchFacts = useCallback(async (fetchPage: number) => {
     setIsLoading(true);
     setError("");
     try {
       const categoriesQuery = selectedCategories.join(',');
       const response = await fetch(
-        `/api/get-facts?page=${currentPage}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
+        `/api/get-facts?page=${fetchPage}&limit=${PAGE_LIMIT}&categories=${categoriesQuery}&language=${contentLanguage}`,
       );
       if (!response.ok) throw new Error("Failed to fetch facts");
       const newFacts: Fact[] = await response.json();
@@ -94,10 +43,9 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
       }
 
       setFacts((prevFacts) => {
-        // If it's the first page (a refresh or initial load), replace the facts. Otherwise, append.
-        const combinedFacts = currentPage === 0 ? newFacts : [...prevFacts, ...newFacts];
-        const uniqueFactsMap = new Map(combinedFacts.map((fact: Fact) => [fact.id, fact]));
-        return Array.from(uniqueFactsMap.values());
+        const combined = fetchPage === 0 ? newFacts : [...prevFacts, ...newFacts];
+        const uniqueFacts = Array.from(new Map(combined.map(f => [f.id, f])).values());
+        return uniqueFacts;
       });
 
     } catch (err) {
@@ -107,20 +55,22 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     }
   }, [selectedCategories, contentLanguage]);
 
-  // Effect to fetch facts when page or settings change
+  // Effect to reset and fetch on settings change
   useEffect(() => {
-    if (isInitialized && isHydrated) {
-      // If we are on page 0 and have no facts, it's an initial load (or a reset).
-      if (page === 0 && facts.length === 0) {
-        fetchFacts(0);
-      } 
-      // If the page number has changed (from scrolling), fetch the next page.
-      else if (page > 0) {
-        fetchFacts(page);
-      }
+    if (isInitialized) {
+      setFacts([]);
+      setPage(0);
+      setHasMore(true);
+      // This effect will trigger a fetch for page 0 via the next effect
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, settingsKey, isInitialized, isHydrated]);
+  }, [settingsKey, isInitialized]);
+
+  // Effect to fetch facts when page changes or after a reset
+  useEffect(() => {
+    if (isInitialized) {
+      fetchFacts(page);
+    }
+  }, [page, fetchFacts, isInitialized]);
   
   const loadMore = () => {
     if (hasMore && !isLoading) {
@@ -128,5 +78,5 @@ export function useFactFeed({ isInitialized, settingsKey, selectedCategories, co
     }
   };
 
-  return { facts, error, isLoading, hasMore, loadMore, isHydrated };
+  return { facts, error, isLoading, hasMore, loadMore };
 }

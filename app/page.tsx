@@ -12,7 +12,7 @@ import { Menu } from "lucide-react";
 export default function Home() {
   const {
     isInitialized,
-    settingsKey,
+    dataKey, // Changed from settingsKey
     contentLanguage, setContentLanguage,
     translationLanguage, setTranslationLanguage,
     level, setLevel,
@@ -23,7 +23,7 @@ export default function Home() {
 
   const { facts, error, isLoading, hasMore, loadMore } = useFactFeed({
     isInitialized,
-    settingsKey,
+    settingsKey: dataKey, // Pass dataKey here
     selectedCategories,
     contentLanguage,
   });
@@ -84,7 +84,7 @@ export default function Home() {
         <div className="w-full max-w-2xl flex flex-col gap-4">
           {facts.map((fact) => (
             <FactCard
-              key={`${fact.id}-${settingsKey}`}
+              key={`${fact.id}-${dataKey}`} // Changed from settingsKey
               factId={fact.id}
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
