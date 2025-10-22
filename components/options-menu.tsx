@@ -125,11 +125,11 @@ export function OptionsMenu({
               <ArrowLeft />
             </Button>
           )}
-          <SheetTitle className="text-xl">{viewTitles[activeView]}</SheetTitle>
+          <SheetTitle className={cn(stagedFontSize)}>{viewTitles[activeView]}</SheetTitle>
         </SheetHeader>
 
         <div className={cn("flex-1 overflow-y-auto p-4 md:p-6", stagedFontSize)}>
-          {activeView === "main" && <MainView setActiveView={setActiveView} />}
+          {activeView === "main" && <MainView setActiveView={setActiveView} fontSize={stagedFontSize} />}
           {activeView === "topics" && <TopicsView stagedCategories={stagedCategories} setStagedCategories={setStagedCategories} fontSize={stagedFontSize} />}
           {activeView === "language" && (
             <LanguageView
