@@ -42,10 +42,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const sourceLangCode = langCodeMap[sourceLanguage];
   const targetLangCode = langCodeMap[targetLanguage];
-  if (!targetLangCode) {
+
+  if (!sourceLangCode || !targetLangCode) {
     return NextResponse.json(
-      { error: `Unsupported target language: ${targetLanguage}` },
+      { error: `Unsupported source or target language` },
       { status: 400 },
     );
   }
@@ -55,10 +57,12 @@ export async function POST(request: Request) {
   try {
     const body: {
       text: string[];
+      source_lang: string;
       target_lang: string;
       context?: string;
     } = {
       text: [word],
+      source_lang: sourceLangCode,
       target_lang: targetLangCode,
     };
 
