@@ -183,8 +183,6 @@ export function ExtendedFactSheet({
                   <TranslationPopoverContent
                     popoverOpen={popoverOpen}
                     selectedText={selectedText}
-                    factId={factId || ""}
-                    level={level}
                     contentLanguage={language}
                     translationLanguage={translationLanguage}
                     baseFontSize={fontSize}

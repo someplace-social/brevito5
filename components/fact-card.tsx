@@ -127,8 +127,6 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
             <TranslationPopoverContent
               popoverOpen={popoverOpen}
               selectedText={selectedText}
-              factId={factId}
-              level={level}
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
               baseFontSize={fontSize}

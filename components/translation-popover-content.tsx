@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 type TranslationPopoverContentProps = {
   popoverOpen: boolean;
   selectedText: string;
-  factId: string;
-  level: string;
   contentLanguage: string;
   translationLanguage: string;
   baseFontSize: string;
@@ -20,8 +18,6 @@ type TranslationPopoverContentProps = {
 export function TranslationPopoverContent({
   popoverOpen,
   selectedText,
-  factId,
-  level,
   contentLanguage,
   translationLanguage,
   baseFontSize,
