@@ -42,10 +42,13 @@ export function useTextSelection(cardRef: RefObject<HTMLElement | null>) {
     };
   }, [popoverOpen, selectedText, cardRef]);
   
-  // Effect to clear selected text when popover closes
+  // Effect to clear selected text and reset selection when popover closes
   useEffect(() => {
     if (!popoverOpen) {
       setSelectedText("");
+      setSelectionRect(null);
+      // Clear the current selection when popover closes
+      window.getSelection()?.removeAllRanges();
     }
   }, [popoverOpen]);
 
