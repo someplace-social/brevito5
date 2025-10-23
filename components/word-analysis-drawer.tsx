@@ -11,6 +11,27 @@ import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import React from "react";
+
+// Helper component to render sentences with the selected word underlined
+const UnderlinedSentence = ({ sentence, word }: { sentence: string; word: string }) => {
+  if (!word || !sentence) return <>{sentence}</>;
+  
+  // Create a case-insensitive regular expression to split the sentence
+  const parts = sentence.split(new RegExp(`(${word})`, 'gi'));
+  
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.toLowerCase() === word.toLowerCase() ? (
+          <u key={index}>{part}</u>
+        ) : (
+          <React.Fragment key={index}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
 
 type WordAnalysisDrawerProps = {
   isOpen: boolean;
@@ -69,7 +90,9 @@ export function WordAnalysisDrawer({
                   <h3 className={cn("text-2xl font-semibold", fontSize)}>{item.translation}</h3>
                   <p className="text-sm text-muted-foreground italic capitalize">{item.partOfSpeech}</p>
                   <blockquote className="mt-2 pl-4 border-l-2 border-primary/20">
-                    <p className={cn("italic", fontSize)}>{item.exampleSentence}</p>
+                    <p className={cn("italic", fontSize)}>
+                      <UnderlinedSentence sentence={item.exampleSentence} word={selectedText} />
+                    </p>
                     <p className={cn("text-muted-foreground", fontSize)}>{item.exampleTranslation}</p>
                   </blockquote>
                 </div>
