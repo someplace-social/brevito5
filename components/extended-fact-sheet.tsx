@@ -94,25 +94,8 @@ export function ExtendedFactSheet({
     }
   }, [factId, isOpen, language, level]);
 
-  const handleLearnMore = async () => {
-    if (!factId) return;
-    try {
-      const response = await fetch("/api/translate-word", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: selectedText, factId, level,
-          sourceLanguage: language, 
-          targetLanguage: translationLanguage 
-        }),
-      });
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-      setPrimaryTranslation(data.translation?.primaryTranslation || "");
-    } catch (err) {
-      console.error(err);
-      setPrimaryTranslation("");
-    }
-
+  const handleLearnMore = async (translation: string) => {
+    setPrimaryTranslation(translation);
     setPopoverOpen(false);
     setDrawerOpen(true);
 
@@ -207,6 +190,7 @@ export function ExtendedFactSheet({
                     contentLanguage={language}
                     translationLanguage={translationLanguage}
                     baseFontSize={fontSize}
+                    contextText={data?.content || null}
                     onLearnMore={handleLearnMore}
                   />
                 </PopoverContent>

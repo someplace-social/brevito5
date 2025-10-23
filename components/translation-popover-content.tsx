@@ -13,7 +13,8 @@ type TranslationPopoverContentProps = {
   contentLanguage: string;
   translationLanguage: string;
   baseFontSize: string;
-  onLearnMore: () => void;
+  contextText: string | null;
+  onLearnMore: (primaryTranslation: string) => void;
 };
 
 export function TranslationPopoverContent({
@@ -24,6 +25,7 @@ export function TranslationPopoverContent({
   contentLanguage,
   translationLanguage,
   baseFontSize,
+  contextText,
   onLearnMore,
 }: TranslationPopoverContentProps) {
   const [translation, setTranslation] = useState<TranslationData | null>(null);
@@ -45,10 +47,9 @@ export function TranslationPopoverContent({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             word: selectedText,
-            factId,
-            level,
             sourceLanguage: contentLanguage,
             targetLanguage: translationLanguage,
+            context: contextText,
           }),
         });
         if (!response.ok) throw new Error("Translation failed");
@@ -62,7 +63,7 @@ export function TranslationPopoverContent({
     };
 
     fetchTranslation();
-  }, [selectedText, popoverOpen, factId, contentLanguage, translationLanguage, level]);
+  }, [selectedText, popoverOpen, contentLanguage, translationLanguage, contextText]);
 
   const getTranslationFontSize = (baseSize: string) => {
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl"];
@@ -71,6 +72,12 @@ export function TranslationPopoverContent({
       return "text-3xl";
     }
     return sizes[currentIndex + 1];
+  };
+
+  const handleLearnMoreClick = () => {
+    if (translation?.primaryTranslation) {
+      onLearnMore(translation.primaryTranslation);
+    }
   };
 
   const isSingleWord = selectedText && !selectedText.includes(" ");
@@ -95,7 +102,7 @@ export function TranslationPopoverContent({
             variant="ghost"
             size="sm"
             className={cn("w-full h-auto px-3 py-2 rounded-t-none border-t border-foreground/10", baseFontSize)}
-            onClick={onLearnMore}
+            onClick={handleLearnMoreClick}
           >
             Learn More
           </Button>

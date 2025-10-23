@@ -43,27 +43,12 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [primaryTranslation, setPrimaryTranslation] = useState("");
 
-  const handleLearnMore = async () => {
-    try {
-      const response = await fetch("/api/translate-word", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: selectedText, factId, level,
-          sourceLanguage: contentLanguage, 
-          targetLanguage: translationLanguage 
-        }),
-      });
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-      setPrimaryTranslation(data.translation?.primaryTranslation || "");
-    } catch (err) {
-      console.error(err);
-      setPrimaryTranslation("");
-    }
-
+  const handleLearnMore = async (translation: string) => {
+    setPrimaryTranslation(translation);
     setPopoverOpen(false);
     setDrawerOpen(true);
 
+    // Fetch analysis if it hasn't been fetched yet
     if (!analysis) {
       setIsLoadingAnalysis(true);
       setAnalysisError(null);
@@ -149,6 +134,7 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
               contentLanguage={contentLanguage}
               translationLanguage={translationLanguage}
               baseFontSize={fontSize}
+              contextText={content}
               onLearnMore={handleLearnMore}
             />
           </PopoverContent>

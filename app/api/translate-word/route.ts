@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export type TranslationData = {
@@ -22,50 +21,58 @@ const langCodeMap: { [key: string]: string } = {
 };
 
 export async function POST(request: Request) {
-  const { word, factId, level, sourceLanguage, targetLanguage } = await request.json();
+  const { word, sourceLanguage, targetLanguage, context } =
+    await request.json();
 
-  if (!word || !factId || !level || !sourceLanguage || !targetLanguage) {
-    return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+  if (!word || !sourceLanguage || !targetLanguage) {
+    return NextResponse.json(
+      {
+        error:
+          "Missing required parameters: word, sourceLanguage, targetLanguage",
+      },
+      { status: 400 },
+    );
   }
 
-  const supabase = await createClient();
-
-  // 1. Check cache
-  const { data: existingTranslation } = await supabase
-    .from("word_translations")
-    .select("translation")
-    .eq("word", word)
-    .eq("language", sourceLanguage) // We cache based on the source language word
-    .single();
-
-  if (existingTranslation) {
-    return NextResponse.json({ translation: existingTranslation.translation });
-  }
-
-  // 2. Call DeepL API
   const deepLKey = process.env.DEEPL_API_KEY;
   if (!deepLKey) {
-    return NextResponse.json({ error: "Translation API key is not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Translation API key is not configured" },
+      { status: 500 },
+    );
   }
 
   const targetLangCode = langCodeMap[targetLanguage];
   if (!targetLangCode) {
-    return NextResponse.json({ error: `Unsupported target language: ${targetLanguage}` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Unsupported target language: ${targetLanguage}` },
+      { status: 400 },
+    );
   }
 
   let primaryTranslation = "";
 
   try {
+    const body: {
+      text: string[];
+      target_lang: string;
+      context?: string;
+    } = {
+      text: [word],
+      target_lang: targetLangCode,
+    };
+
+    if (context) {
+      body.context = context;
+    }
+
     const response = await fetch("https://api-free.deepl.com/v2/translate", {
       method: "POST",
       headers: {
-        "Authorization": `DeepL-Auth-Key ${deepLKey}`,
+        Authorization: `DeepL-Auth-Key ${deepLKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        text: [word],
-        target_lang: targetLangCode,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -81,24 +88,15 @@ export async function POST(request: Request) {
       throw new Error("Invalid response structure from DeepL API.");
     }
     primaryTranslation = translatedText;
-
   } catch (error) {
     console.error("Error fetching from DeepL:", error);
-    return NextResponse.json({ error: "Failed to get a valid translation." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to get a valid translation." },
+      { status: 500 },
+    );
   }
-  
-  const translationData: TranslationData = { primaryTranslation };
 
-  // 3. Insert into cache
-  await supabase
-    .from("word_translations")
-    .insert({
-      fact_id: factId,
-      language: sourceLanguage, // Cache is keyed by the original word's language
-      level,
-      word,
-      translation: translationData,
-    });
+  const translationData: TranslationData = { primaryTranslation };
 
   return NextResponse.json({ translation: translationData });
 }
