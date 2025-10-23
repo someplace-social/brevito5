@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 
+export type MeaningAnalysis = {
+  partOfSpeech: string;
+  translation: string;
+  exampleSentence: string;
+  exampleTranslation: string;
+};
+
 export type WordAnalysisData = {
   rootWord?: string;
-  otherMeanings?: string[];
-  exampleSentences?: string[];
+  analysis: MeaningAnalysis[];
 };
 
 type GeminiApiResponse = {
@@ -32,8 +38,20 @@ export async function POST(request: Request) {
     The JSON object must have this exact structure:
     {
       "rootWord": "The root or infinitive form of the word. If not applicable, use the original word.",
-      "otherMeanings": ["A list of 2-3 common ${targetLanguage} meanings or synonyms for the word."],
-      "exampleSentences": ["An example sentence in ${sourceLanguage} using the original word.", "A second example sentence in ${sourceLanguage}."]
+      "analysis": [
+        {
+          "partOfSpeech": "The part of speech (e.g., 'verb', 'noun', 'adjective').",
+          "translation": "The ${targetLanguage} translation for this specific meaning.",
+          "exampleSentence": "An example sentence in ${sourceLanguage} using the original word for this meaning.",
+          "exampleTranslation": "The ${targetLanguage} translation of the example sentence."
+        },
+        {
+          "partOfSpeech": "The part of speech for a second meaning.",
+          "translation": "A second, different ${targetLanguage} translation.",
+          "exampleSentence": "A second example sentence in ${sourceLanguage} demonstrating the second meaning.",
+          "exampleTranslation": "The ${targetLanguage} translation of the second example sentence."
+        }
+      ]
     }
   `;
 

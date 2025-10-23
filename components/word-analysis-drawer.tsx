@@ -5,34 +5,12 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import type { WordAnalysisData } from "@/app/api/get-word-analysis/route";
 import { Skeleton } from "./ui/skeleton";
-import React from "react";
 import { Button } from "./ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Helper component to render sentences with the selected word underlined
-const UnderlinedSentence = ({ sentence, word }: { sentence: string; word: string }) => {
-  if (!word) return <>{sentence}</>;
-  
-  // Create a case-insensitive regular expression to split the sentence
-  const parts = sentence.split(new RegExp(`(${word})`, 'gi'));
-  
-  return (
-    <>
-      {parts.map((part, index) =>
-        part.toLowerCase() === word.toLowerCase() ? (
-          <u key={index}>{part}</u>
-        ) : (
-          <React.Fragment key={index}>{part}</React.Fragment>
-        )
-      )}
-    </>
-  );
-};
 
 type WordAnalysisDrawerProps = {
   isOpen: boolean;
@@ -53,66 +31,56 @@ export function WordAnalysisDrawer({
   error,
   fontSize,
 }: WordAnalysisDrawerProps) {
-  // Remove duplicates AND any empty/falsy values to prevent blank bullets
-  const uniqueMeanings = [...new Set(analysis?.otherMeanings || [])].filter(Boolean);
-
   const spanishDictUrl = `https://www.spanishdict.com/translate/${encodeURIComponent(selectedText)}`;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-lg">
-        <SheetHeader className="text-left">
-          <SheetTitle className={cn("text-2xl", fontSize)}>{selectedText}</SheetTitle>
-          <SheetDescription className="sr-only">In-depth analysis for the selected word.</SheetDescription>
+      <SheetContent side="bottom" className="rounded-t-lg max-h-[90vh] flex flex-col">
+        <SheetHeader className="text-left flex-shrink-0">
+          <SheetTitle className={cn("text-3xl capitalize", fontSize)}>{selectedText}</SheetTitle>
         </SheetHeader>
-        <div className="py-6">
+        <div className="py-4 flex-1 overflow-y-auto">
           {isLoading && (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-8 w-full mt-2" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-1/2" />
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-8 w-full mt-2" />
+              </div>
             </div>
           )}
           {error && <p className="text-destructive">{error}</p>}
           {analysis && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {analysis.rootWord && selectedText.toLowerCase() !== analysis.rootWord.toLowerCase() && (
-                <div>
-                  <h3 className="font-semibold text-muted-foreground mb-1">ROOT</h3>
-                  <p className={`italic ${fontSize}`}>{analysis.rootWord}</p>
+                <div className="pb-4 border-b">
+                  <h3 className="font-semibold text-muted-foreground text-sm tracking-wider uppercase">ROOT</h3>
+                  <p className={cn("italic text-lg", fontSize)}>{analysis.rootWord}</p>
                 </div>
               )}
               
-              {uniqueMeanings.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-muted-foreground mb-2">MEANINGS</h3>
-                  <ul className={`list-disc list-inside space-y-1 ${fontSize}`}>
-                    {uniqueMeanings.map((meaning, i) => (
-                      <li key={i}>{meaning}</li>
-                    ))}
-                  </ul>
+              {analysis.analysis?.map((item, index) => (
+                <div key={index} className="space-y-2">
+                  <h3 className={cn("text-2xl font-semibold", fontSize)}>{item.translation}</h3>
+                  <p className="text-sm text-muted-foreground italic capitalize">{item.partOfSpeech}</p>
+                  <blockquote className="mt-2 pl-4 border-l-2 border-primary/20">
+                    <p className={cn("italic", fontSize)}>{item.exampleSentence}</p>
+                    <p className={cn("text-muted-foreground", fontSize)}>{item.exampleTranslation}</p>
+                  </blockquote>
                 </div>
-              )}
-
-              {analysis.exampleSentences && analysis.exampleSentences.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-muted-foreground mb-2">EXAMPLES</h3>
-                  <ul className={`list-disc list-inside space-y-1 italic text-muted-foreground ${fontSize}`}>
-                    {analysis.exampleSentences.map((sentence, i) => (
-                      <li key={i}>
-                        <UnderlinedSentence sentence={sentence} word={selectedText} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              ))}
             </div>
           )}
         </div>
-        <div className="border-t pt-4">
+        <div className="border-t pt-4 flex-shrink-0">
           <Button variant="ghost" className={cn("w-full justify-between", fontSize)} asChild>
             <a href={spanishDictUrl} target="_blank" rel="noopener noreferrer">
-              Learn Even More
+              View on SpanishDict
               <ArrowUpRight className="h-4 w-4" />
             </a>
           </Button>
