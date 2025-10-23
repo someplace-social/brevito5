@@ -68,7 +68,7 @@ export function OptionsMenu({
   const [stagedCategories, setStagedCategories] = useState(selectedCategories);
   const [stagedFontSize, setStagedFontSize] = useState(fontSize);
   const [stagedShowImages, setStagedShowImages] = useState(showImages);
-  const [stagedTheme, setStagedTheme] = useState(theme);
+  const [stagedTheme, setStagedTheme] = useState<string>(theme || 'dark');
 
   // Sync staged state when the menu opens
   useEffect(() => {
@@ -79,7 +79,7 @@ export function OptionsMenu({
       setStagedCategories(selectedCategories);
       setStagedFontSize(fontSize);
       setStagedShowImages(showImages);
-      setStagedTheme(theme);
+      setStagedTheme(theme || 'dark');
     }
   }, [isOpen, contentLanguage, translationLanguage, level, selectedCategories, fontSize, showImages, theme]);
 

@@ -21,20 +21,39 @@ type ThemeSwitcherProps = {
 
 export function ThemeSwitcher({ fontSize, stagedTheme, setStagedTheme }: ThemeSwitcherProps) {
   const [mounted, setMounted] = useState(false);
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const [lastTheme, setLastTheme] = useState<string | undefined>(undefined);
 
+  // Set initial theme once mounted
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Apply the theme change whenever the staged theme changes
-  useEffect(() => {
     if (stagedTheme) {
+      setLastTheme(stagedTheme);
       setTheme(stagedTheme);
     }
-  }, [stagedTheme, setTheme]);
+  }, []);
 
-  if (!mounted || !stagedTheme) {
+  const handleThemeChange = (newTheme: string) => {
+    // Force a clean theme state by temporarily setting to a different value
+    if (lastTheme && newTheme !== lastTheme) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const intermediateTheme = prefersDark ? 'light' : 'dark';
+      
+      // Clear current theme
+      document.documentElement.classList.remove(lastTheme);
+      
+      // Apply new theme
+      setTheme(newTheme);
+      setStagedTheme(newTheme);
+      setLastTheme(newTheme);
+    } else {
+      setTheme(newTheme);
+      setStagedTheme(newTheme);
+      setLastTheme(newTheme);
+    }
+  };
+
+  if (!mounted) {
     return (
       <div className="grid grid-cols-1 items-center gap-2">
         <Label htmlFor="theme" className={cn(fontSize)}>
@@ -50,7 +69,10 @@ export function ThemeSwitcher({ fontSize, stagedTheme, setStagedTheme }: ThemeSw
       <Label htmlFor="theme" className={cn(fontSize)}>
         Theme
       </Label>
-      <Select value={stagedTheme} onValueChange={setStagedTheme}>
+      <Select 
+        value={theme || stagedTheme} 
+        onValueChange={handleThemeChange}
+      >
         <SelectTrigger className={cn(fontSize)}>
           <SelectValue placeholder="Select a theme" />
         </SelectTrigger>
