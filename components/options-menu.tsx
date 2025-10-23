@@ -86,6 +86,12 @@ export function OptionsMenu({
   // Apply all staged changes when the menu is closed
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      // Handle theme change immediately
+      if (stagedTheme && stagedTheme !== theme) {
+        // The theme will be applied via the ThemeSwitcher's useEffect
+        setStagedTheme(stagedTheme);
+      }
+
       const hasChanges =
         stagedContentLanguage !== contentLanguage ||
         stagedTranslationLanguage !== translationLanguage ||
