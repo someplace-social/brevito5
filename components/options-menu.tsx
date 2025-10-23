@@ -124,11 +124,13 @@ export function OptionsMenu({
       </SheetTrigger>
       <SheetContent side="right" className="w-screen h-screen sm:max-w-full p-0 flex flex-col">
         <SheetHeader className="p-4 border-b border-b-foreground/10 text-left flex-shrink-0 flex-row items-center gap-2">
-          {activeView !== "main" && (
-            <Button variant="ghost" size="icon" onClick={() => setActiveView("main")}>
-              <ArrowLeft />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => (activeView === "main" ? handleOpenChange(false) : setActiveView("main"))}
+          >
+            <ArrowLeft />
+          </Button>
           <SheetTitle className={cn(stagedFontSize)}>{viewTitles[activeView]}</SheetTitle>
         </SheetHeader>
 
