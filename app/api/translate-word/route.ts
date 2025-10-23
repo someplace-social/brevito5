@@ -48,9 +48,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Translation API key is not configured" }, { status: 500 });
   }
 
+  const sourceLangCode = langCodeMap[sourceLanguage];
   const targetLangCode = langCodeMap[targetLanguage];
-  if (!targetLangCode) {
-    return NextResponse.json({ error: `Unsupported target language: ${targetLanguage}` }, { status: 400 });
+  if (!targetLangCode || !sourceLangCode) {
+    return NextResponse.json({ error: `Unsupported language provided.` }, { status: 400 });
   }
 
   let primaryTranslation = "";
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         text: [word],
+        source_lang: sourceLangCode,
         target_lang: targetLangCode,
       }),
     });

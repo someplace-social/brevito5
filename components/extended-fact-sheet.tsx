@@ -61,7 +61,6 @@ export function ExtendedFactSheet({
   const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [primaryTranslation, setPrimaryTranslation] = useState("");
 
   useEffect(() => {
     if (isOpen && factId) {
@@ -95,48 +94,32 @@ export function ExtendedFactSheet({
   }, [factId, isOpen, language, level]);
 
   const handleLearnMore = async () => {
-    if (!factId) return;
-    try {
-      const response = await fetch("/api/translate-word", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: selectedText, factId, level,
-          sourceLanguage: language, 
-          targetLanguage: translationLanguage 
-        }),
-      });
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-      setPrimaryTranslation(data.translation?.primaryTranslation || "");
-    } catch (err) {
-      console.error(err);
-      setPrimaryTranslation("");
-    }
-
     setPopoverOpen(false);
     setDrawerOpen(true);
 
-    if (!analysis) {
-      setIsLoadingAnalysis(true);
-      setAnalysisError(null);
-      try {
-        const response = await fetch("/api/get-word-analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            word: selectedText, 
-            sourceLanguage: language,
-            targetLanguage: translationLanguage 
-          }),
-        });
-        if (!response.ok) throw new Error("Analysis failed");
-        const data = await response.json();
-        setAnalysis(data.analysis);
-      } catch (err) {
-        setAnalysisError(err instanceof Error ? err.message : "An error occurred.");
-      } finally {
-        setIsLoadingAnalysis(false);
+    setIsLoadingAnalysis(true);
+    setAnalysis(null);
+    setAnalysisError(null);
+    try {
+      const response = await fetch("/api/get-word-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          word: selectedText, 
+          sourceLanguage: language,
+          targetLanguage: translationLanguage 
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Analysis failed");
       }
+      const data = await response.json();
+      setAnalysis(data);
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : "An error occurred.");
+    } finally {
+      setIsLoadingAnalysis(false);
     }
   };
 
@@ -219,7 +202,6 @@ export function ExtendedFactSheet({
         isOpen={drawerOpen}
         onOpenChange={setDrawerOpen}
         selectedText={selectedText}
-        initialTranslation={primaryTranslation}
         analysis={analysis}
         isLoading={isLoadingAnalysis}
         error={analysisError}

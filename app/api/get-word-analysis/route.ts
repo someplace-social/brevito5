@@ -1,9 +1,16 @@
+
 import { NextResponse } from "next/server";
 
+export type MeaningWithExample = {
+  meaning: string;
+  exampleSpanish: string;
+  exampleEnglish: string;
+};
+
 export type WordAnalysisData = {
-  rootWord?: string;
-  otherMeanings?: string[];
-  exampleSentences?: string[];
+  primaryTranslation: string;
+  partOfSpeech: string;
+  meanings: MeaningWithExample[];
 };
 
 type GeminiApiResponse = {
@@ -31,22 +38,37 @@ export async function POST(request: Request) {
     Provide the response ONLY as a valid JSON object with no other text, explanations, or markdown formatting.
     The JSON object must have this exact structure:
     {
-      "rootWord": "The root or infinitive form of the word. If not applicable, use the original word.",
-      "otherMeanings": ["A list of 2-3 common ${targetLanguage} meanings or synonyms for the word."],
-      "exampleSentences": ["An example sentence in ${sourceLanguage} using the original word.", "A second example sentence in ${sourceLanguage}."]
+      "primaryTranslation": "The most common ${targetLanguage} translation of the word.",
+      "partOfSpeech": "The part of speech of the word in ${sourceLanguage} (e.g., 'verb', 'noun', 'adjective').",
+      "meanings": [
+        {
+          "meaning": "A specific meaning of the word in ${targetLanguage}.",
+          "exampleSpanish": "An example sentence in ${sourceLanguage} demonstrating this specific meaning.",
+          "exampleEnglish": "The ${targetLanguage} translation of the example sentence."
+        },
+        {
+          "meaning": "Another meaning of the word in ${targetLanguage}.",
+          "exampleSpanish": "Another example sentence in ${sourceLanguage} for the second meaning.",
+          "exampleEnglish": "The ${targetLanguage} translation of the second example sentence."
+        }
+      ]
     }
+    Provide 2-3 meanings. Ensure the example sentences are practical and common.
   `;
 
   try {
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${genAIKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${genAIKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
         }),
-      }
+      },
     );
 
     const aiData: GeminiApiResponse = await aiResponse.json();
@@ -56,12 +78,14 @@ export async function POST(request: Request) {
     }
 
     const text = aiData.candidates[0].content.parts[0].text;
-    const analysis = JSON.parse(text.trim().replace(/^```json\n|```$/g, ""));
-    
-    return NextResponse.json({ analysis });
+    const analysis = JSON.parse(text);
 
+    return NextResponse.json(analysis);
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return NextResponse.json({ error: "Failed to get analysis from AI service." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to get analysis from AI service." },
+      { status: 500 },
+    );
   }
 }
