@@ -14,7 +14,7 @@ type TranslationPopoverContentProps = {
   translationLanguage: string;
   baseFontSize: string;
   contextText: string | null;
-  onLearnMore: (primaryTranslation: string) => void;
+  onLearnMore: () => void;
 };
 
 export function TranslationPopoverContent({
@@ -74,12 +74,6 @@ export function TranslationPopoverContent({
     return sizes[currentIndex + 1];
   };
 
-  const handleLearnMoreClick = () => {
-    if (translation?.primaryTranslation) {
-      onLearnMore(translation.primaryTranslation);
-    }
-  };
-
   const isSingleWord = selectedText && !selectedText.includes(" ");
   const translationFontSize = getTranslationFontSize(baseFontSize);
 
@@ -102,7 +96,7 @@ export function TranslationPopoverContent({
             variant="ghost"
             size="sm"
             className={cn("w-full h-auto px-3 py-2 rounded-t-none border-t border-foreground/10", baseFontSize)}
-            onClick={handleLearnMoreClick}
+            onClick={onLearnMore}
           >
             Learn More
           </Button>

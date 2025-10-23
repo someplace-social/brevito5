@@ -61,7 +61,6 @@ export function ExtendedFactSheet({
   const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [primaryTranslation, setPrimaryTranslation] = useState("");
 
   useEffect(() => {
     if (isOpen && factId) {
@@ -94,8 +93,7 @@ export function ExtendedFactSheet({
     }
   }, [factId, isOpen, language, level]);
 
-  const handleLearnMore = async (translation: string) => {
-    setPrimaryTranslation(translation);
+  const handleLearnMore = async () => {
     setPopoverOpen(false);
     setDrawerOpen(true);
 
@@ -203,7 +201,6 @@ export function ExtendedFactSheet({
         isOpen={drawerOpen}
         onOpenChange={setDrawerOpen}
         selectedText={selectedText}
-        initialTranslation={primaryTranslation}
         analysis={analysis}
         isLoading={isLoadingAnalysis}
         error={analysisError}

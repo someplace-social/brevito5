@@ -38,7 +38,6 @@ type WordAnalysisDrawerProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   selectedText: string;
-  initialTranslation?: string;
   analysis: WordAnalysisData | null;
   isLoading: boolean;
   error: string | null;
@@ -49,22 +48,13 @@ export function WordAnalysisDrawer({
   isOpen,
   onOpenChange,
   selectedText,
-  initialTranslation,
   analysis,
   isLoading,
   error,
   fontSize,
 }: WordAnalysisDrawerProps) {
-  // Combine the initial translation with other meanings for a unified list
-  const allMeanings =
-    analysis?.otherMeanings && initialTranslation
-      ? [initialTranslation, ...analysis.otherMeanings]
-      : initialTranslation
-        ? [initialTranslation]
-        : analysis?.otherMeanings || [];
-
   // Remove duplicates AND any empty/falsy values to prevent blank bullets
-  const uniqueMeanings = [...new Set(allMeanings)].filter(Boolean);
+  const uniqueMeanings = [...new Set(analysis?.otherMeanings || [])].filter(Boolean);
 
   const spanishDictUrl = `https://www.spanishdict.com/translate/${encodeURIComponent(selectedText)}`;
 
@@ -73,7 +63,7 @@ export function WordAnalysisDrawer({
       <SheetContent side="bottom" className="rounded-t-lg">
         <SheetHeader className="text-left">
           <SheetTitle className={cn("text-2xl", fontSize)}>{selectedText}</SheetTitle>
-          <SheetDescription className={cn("text-lg", fontSize)}>{initialTranslation || "..."}</SheetDescription>
+          <SheetDescription className="sr-only">In-depth analysis for the selected word.</SheetDescription>
         </SheetHeader>
         <div className="py-6">
           {isLoading && (
@@ -93,14 +83,16 @@ export function WordAnalysisDrawer({
                 </div>
               )}
               
-              <div>
-                <h3 className="font-semibold text-muted-foreground mb-2">MEANINGS</h3>
-                <ul className={`list-disc list-inside space-y-1 ${fontSize}`}>
-                  {uniqueMeanings.map((meaning, i) => (
-                    <li key={i}>{meaning}</li>
-                  ))}
-                </ul>
-              </div>
+              {uniqueMeanings.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-muted-foreground mb-2">MEANINGS</h3>
+                  <ul className={`list-disc list-inside space-y-1 ${fontSize}`}>
+                    {uniqueMeanings.map((meaning, i) => (
+                      <li key={i}>{meaning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {analysis.exampleSentences && analysis.exampleSentences.length > 0 && (
                 <div>
