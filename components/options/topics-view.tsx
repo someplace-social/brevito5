@@ -13,7 +13,7 @@ type TopicsViewProps = {
 };
 
 export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: TopicsViewProps) {
-  const handleCategoryToggle = (category: string, pressed: boolean) => {
+  const handleCategoryToggle = (category: string) => {
     setStagedCategories((currentCategories) => {
       const isCurrentlySelected = currentCategories.includes(category);
       // If it's the last category and it's selected, don't allow deselection
@@ -45,7 +45,7 @@ export function TopicsView({ stagedCategories, setStagedCategories, fontSize }: 
             variant="outline"
             pressed={stagedCategories.includes(category)}
             disabled={stagedCategories.length === 1 && stagedCategories.includes(category)}
-            onPressedChange={(pressed) => handleCategoryToggle(category, pressed)}
+            onPressedChange={() => handleCategoryToggle(category)}
             className={cn("capitalize", fontSize, "hover:bg-accent/50")}
           >
             {category}
