@@ -31,26 +31,19 @@ export function ThemeSwitcher({ fontSize, stagedTheme, setStagedTheme }: ThemeSw
       setLastTheme(stagedTheme);
       setTheme(stagedTheme);
     }
-  }, []);
+  }, [stagedTheme, setTheme]);
 
   const handleThemeChange = (newTheme: string) => {
     // Force a clean theme state by temporarily setting to a different value
     if (lastTheme && newTheme !== lastTheme) {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const intermediateTheme = prefersDark ? 'light' : 'dark';
-      
       // Clear current theme
       document.documentElement.classList.remove(lastTheme);
-      
-      // Apply new theme
-      setTheme(newTheme);
-      setStagedTheme(newTheme);
-      setLastTheme(newTheme);
-    } else {
-      setTheme(newTheme);
-      setStagedTheme(newTheme);
-      setLastTheme(newTheme);
     }
+    
+    // Apply new theme
+    setTheme(newTheme);
+    setStagedTheme(newTheme);
+    setLastTheme(newTheme);
   };
 
   if (!mounted) {
