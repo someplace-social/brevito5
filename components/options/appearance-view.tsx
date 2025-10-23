@@ -86,4 +86,4 @@ export function AppearanceView({
       </div>
     </div>
   );
-}
+} 
