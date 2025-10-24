@@ -14,37 +14,39 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>) {
     const handleSelectionChange = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(() => {
-        const selection = window.getSelection();
-        const container = containerRef.current;
+        requestAnimationFrame(() => {
+          const selection = window.getSelection();
+          const container = containerRef.current;
 
-        if (!selection || !container || !selection.anchorNode || !container.contains(selection.anchorNode)) {
-          if (popoverOpenRef.current) {
-            setPopoverOpen(false);
+          if (!selection || !container || !selection.anchorNode || !container.contains(selection.anchorNode)) {
+            if (popoverOpenRef.current) {
+              setPopoverOpen(false);
+            }
+            return;
           }
-          return;
-        }
 
-        const text = selection.toString().trim();
-        if (text && text.length > 0) {
-          const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          const containerBounds = container.getBoundingClientRect();
-          
-          setSelectionRect(new DOMRect(
-            rect.left - containerBounds.left, 
-            rect.top - containerBounds.top, 
-            rect.width, 
-            rect.height
-          ));
-          
-          setSelectedText(text);
-          setPopoverOpen(true);
-        } else {
-          if (popoverOpenRef.current) {
-            setPopoverOpen(false);
+          const text = selection.toString().trim();
+          if (text && text.length > 0) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            const containerBounds = container.getBoundingClientRect();
+            
+            setSelectionRect(new DOMRect(
+              rect.left - containerBounds.left, 
+              rect.top - containerBounds.top, 
+              rect.width, 
+              rect.height
+            ));
+            
+            setSelectedText(text);
+            setPopoverOpen(true);
+          } else {
+            if (popoverOpenRef.current) {
+              setPopoverOpen(false);
+            }
           }
-        }
-      }, 300);
+        });
+      }, 150);
     };
 
     document.addEventListener("selectionchange", handleSelectionChange);
@@ -55,12 +57,10 @@ export function useTextSelection(containerRef: RefObject<HTMLElement | null>) {
     };
   }, [containerRef]);
   
-  // Effect to clear selected text and reset selection when popover closes
   useEffect(() => {
     if (!popoverOpen) {
       setSelectedText("");
       setSelectionRect(null);
-      // Clear the current selection when popover closes to prevent re-triggering
       if (window.getSelection()?.toString()) {
         window.getSelection()?.removeAllRanges();
       }

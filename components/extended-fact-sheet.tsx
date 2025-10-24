@@ -138,8 +138,8 @@ export function ExtendedFactSheet({
               More detailed information about the selected fact.
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={contentRef}>
-            <div className="max-w-2xl mx-auto relative">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="max-w-2xl mx-auto relative" ref={contentRef}>
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverAnchor style={{ position: 'absolute', top: selectionRect?.y, left: selectionRect?.x, width: selectionRect?.width, height: selectionRect?.height }} />
                 {isLoading ? (
