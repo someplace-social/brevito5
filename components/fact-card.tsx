@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -41,6 +41,10 @@ export function FactCard({ factId, contentLanguage, translationLanguage, level, 
   const [analysis, setAnalysis] = useState<WordAnalysisData | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAnalysis(null);
+  }, [selectedText]);
 
   const handleLearnMore = async () => {
     setPopoverOpen(false);

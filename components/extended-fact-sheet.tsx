@@ -63,6 +63,10 @@ export function ExtendedFactSheet({
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   useEffect(() => {
+    setAnalysis(null);
+  }, [selectedText]);
+
+  useEffect(() => {
     if (isOpen && factId) {
       const fetchExtendedContent = async () => {
         setIsLoading(true);

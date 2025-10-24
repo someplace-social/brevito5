@@ -2,19 +2,25 @@
 
 import { useState, useEffect, useRef, RefObject } from "react";
 
-export function useTextSelection(cardRef: RefObject<HTMLElement | null>) {
+export function useTextSelection(containerRef: RefObject<HTMLElement | null>) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedText, setSelectedText] = useState("");
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const popoverOpenRef = useRef(popoverOpen);
+  popoverOpenRef.current = popoverOpen;
 
   useEffect(() => {
     const handleSelectionChange = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(() => {
         const selection = window.getSelection();
-        if (!selection || !cardRef.current || !cardRef.current.contains(selection.anchorNode)) {
-          if (popoverOpen) setPopoverOpen(false);
+        const container = containerRef.current;
+
+        if (!selection || !container || !selection.anchorNode || !container.contains(selection.anchorNode)) {
+          if (popoverOpenRef.current) {
+            setPopoverOpen(false);
+          }
           return;
         }
 
@@ -22,33 +28,42 @@ export function useTextSelection(cardRef: RefObject<HTMLElement | null>) {
         if (text && text.length > 0) {
           const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
-          const cardBounds = cardRef.current.getBoundingClientRect();
-          setSelectionRect(new DOMRect(rect.left - cardBounds.left, rect.top - cardBounds.top, rect.width, rect.height));
+          const containerBounds = container.getBoundingClientRect();
           
-          if (text !== selectedText) {
-            setSelectedText(text);
-          }
+          setSelectionRect(new DOMRect(
+            rect.left - containerBounds.left, 
+            rect.top - containerBounds.top, 
+            rect.width, 
+            rect.height
+          ));
+          
+          setSelectedText(text);
           setPopoverOpen(true);
         } else {
-          setPopoverOpen(false);
+          if (popoverOpenRef.current) {
+            setPopoverOpen(false);
+          }
         }
       }, 300);
     };
 
     document.addEventListener("selectionchange", handleSelectionChange);
+    
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [popoverOpen, selectedText, cardRef]);
+  }, [containerRef]);
   
   // Effect to clear selected text and reset selection when popover closes
   useEffect(() => {
     if (!popoverOpen) {
       setSelectedText("");
       setSelectionRect(null);
-      // Clear the current selection when popover closes
-      window.getSelection()?.removeAllRanges();
+      // Clear the current selection when popover closes to prevent re-triggering
+      if (window.getSelection()?.toString()) {
+        window.getSelection()?.removeAllRanges();
+      }
     }
   }, [popoverOpen]);
 
